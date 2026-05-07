@@ -1,3 +1,4 @@
+import 'package:dose_tracker/features/widgets/custom_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -27,8 +28,7 @@ class HistoryScreen extends ConsumerWidget {
       grouped.putIfAbsent(key, () => []).add(log);
     }
 
-    final sortedDates = grouped.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -38,28 +38,21 @@ class HistoryScreen extends ConsumerWidget {
           children: [
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 24, 20, 16),
-              child: Text('History',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary)),
+              child: Text(
+                'History',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
             Expanded(
               child: sortedDates.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.history, size: 64,
-                              color: AppColors.textHint.withValues(alpha: 0.5)),
-                          const SizedBox(height: 16),
-                          const Text('No history yet',
-                              style: TextStyle(fontSize: 18,
-                                  color: AppColors.textSecondary)),
-                          const SizedBox(height: 4),
-                          const Text('Your dose logs will appear here',
-                              style: TextStyle(fontSize: 14,
-                                  color: AppColors.textHint)),
-                        ],
-                      ),
+                  ? CustomEmptyState(
+                      title: 'No history yet',
+                      description: 'Your dose logs will appear here',
+                      icon: Icons.history_outlined,
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -68,7 +61,10 @@ class HistoryScreen extends ConsumerWidget {
                         final date = sortedDates[index];
                         final logs = grouped[date]!;
                         return _DateGroup(
-                            date: date, logs: logs, medMap: medMap);
+                          date: date,
+                          logs: logs,
+                          medMap: medMap,
+                        );
                       },
                     ),
             ),
@@ -104,14 +100,22 @@ class _DateGroup extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary)),
-              Text('$takenCount/${logs.length} taken',
-                  style: const TextStyle(fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                '$takenCount/${logs.length} taken',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),
@@ -139,7 +143,8 @@ class _HistoryTile extends StatelessWidget {
     final isTaken = log.status == 'taken';
     final name = medication?.name ?? 'Unknown';
     final timeStr = log.actionTime != null
-        ? DateFormat('h:mm a').format(log.actionTime!) : '';
+        ? DateFormat('h:mm a').format(log.actionTime!)
+        : '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -152,14 +157,17 @@ class _HistoryTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: isTaken ? AppColors.taken.withValues(alpha: 0.12)
+              color: isTaken
+                  ? AppColors.taken.withValues(alpha: 0.12)
                   : AppColors.missed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              isTaken ? Icons.check_circle_outline
+              isTaken
+                  ? Icons.check_circle_outline
                   : Icons.remove_circle_outline,
               color: isTaken ? AppColors.taken : AppColors.skippedText,
               size: 22,
@@ -170,14 +178,21 @@ class _HistoryTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 15,
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 if (medication != null)
                   Text(
                     '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}',
-                    style: const TextStyle(fontSize: 13,
-                        color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -185,12 +200,22 @@ class _HistoryTile extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(isTaken ? 'Taken' : 'Skipped',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                      color: isTaken ? AppColors.taken : AppColors.skippedText)),
+              Text(
+                isTaken ? 'Taken' : 'Skipped',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isTaken ? AppColors.taken : AppColors.skippedText,
+                ),
+              ),
               if (timeStr.isNotEmpty)
-                Text(timeStr, style: const TextStyle(fontSize: 12,
-                    color: AppColors.textSecondary)),
+                Text(
+                  timeStr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
             ],
           ),
         ],

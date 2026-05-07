@@ -14,7 +14,6 @@ class AppColors {
   static const Color scaffoldBg = Color(0xFFF5F7FA);
   static const Color cardBg = Colors.white;
   static const Color headerBg = Color(0xFFE8F4FD);
-  static const Color white = Colors.white;
 
   // Text
   static const Color textPrimary = Color(0xFF2D3748);

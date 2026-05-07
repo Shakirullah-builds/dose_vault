@@ -1,3 +1,4 @@
+import 'package:dose_tracker/features/widgets/custom_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +37,11 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         child: medications.isEmpty
-            ? _EmptyState()
+            ? CustomEmptyState(
+                title: 'No medications yet',
+                description: 'Tap the + button to add your first medication',
+                icon: Icons.medication_outlined,
+              )
             : Column(
                 children: [
                   _Header(
@@ -86,42 +91,6 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.medication_outlined,
-              size: 80,
-              color: AppColors.textHint.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'No medications yet',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Tap the + button to add your first medication',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _Header extends StatelessWidget {
   final double adherence;
   final int takenCount;
@@ -139,7 +108,7 @@ class _Header extends StatelessWidget {
       //margin: const EdgeInsets.all(16),
       //padding: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
@@ -164,6 +133,7 @@ class _Header extends StatelessWidget {
                     Text(
                       DateFormat('EEEE, MMM d').format(now),
                       style: const TextStyle(
+                        fontWeight: FontWeight.w600,
                         fontSize: 15,
                         color: AppColors.textSecondary,
                       ),
@@ -187,7 +157,7 @@ class _Header extends StatelessWidget {
             const SizedBox(height: 24),
             Center(
               child: CircularPercentIndicator(
-                radius: 80,
+                radius: 70,
                 lineWidth: 10,
                 percent: adherence.clamp(0.0, 1.0),
                 center: Column(
@@ -196,7 +166,7 @@ class _Header extends StatelessWidget {
                     Text(
                       '${(adherence * 100).round()}%',
                       style: const TextStyle(
-                        fontSize: 36,
+                        fontSize: 33,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
@@ -268,6 +238,13 @@ class _UpcomingCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBg,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
         //borderRadius: BorderRadius.circular(16),
         //border: Border.all(color: AppColors.divider),
       ),
@@ -279,11 +256,12 @@ class _UpcomingCard extends ConsumerWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   color: AppColors.iconBg,
-                  borderRadius: BorderRadius.circular(12),
+                  //borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.medication_outlined,
+                  Icons.medication_rounded,
                   color: AppColors.primaryDark,
                   size: 24,
                 ),
@@ -293,13 +271,26 @@ class _UpcomingCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      medication.name,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          medication.name,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          _fmt(medication.scheduledTime),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       _dosageLabel(medication),
@@ -309,14 +300,6 @@ class _UpcomingCard extends ConsumerWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-              Text(
-                _fmt(medication.scheduledTime),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -367,8 +350,13 @@ class _CompletedCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -376,15 +364,16 @@ class _CompletedCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
+              shape: BoxShape.circle,
               color: isTaken
                   ? AppColors.taken.withValues(alpha: 0.12)
                   : AppColors.skipped.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
+              //borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               isTaken
-                  ? Icons.check_circle_outline
-                  : Icons.remove_circle_outline,
+                  ? Icons.check_circle_rounded
+                  : Icons.remove_circle_rounded,
               color: isTaken ? AppColors.taken : AppColors.skippedText,
               size: 24,
             ),
@@ -418,10 +407,10 @@ class _CompletedCard extends StatelessWidget {
             children: [
               Text(
                 _fmt(medication.scheduledTime),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textPrimary.withValues(alpha: 0.6),
                 ),
               ),
               if (actionStr.isNotEmpty)
@@ -458,7 +447,7 @@ class _ActionBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -469,7 +458,7 @@ class _ActionBtn extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: isSkip ? AppColors.skippedText : AppColors.taken,
                 ),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dose_tracker/core/models/medication.dart';
@@ -31,23 +32,64 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+    TimeOfDay tempTime = _selectedTime;
+
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.primaryDark,
+      builder: (context) => Container(
+        height: 280,
+        padding: const EdgeInsets.only(top: 6),
+        decoration: const BoxDecoration(
+          color: CupertinoColors.systemBackground,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            // ── Done / Cancel bar ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: () {
+                      setState(() => _selectedTime = tempTime);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // ── Cupertino Timer Picker ──
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: DateTime(
+                  2026,
+                  1,
+                  1,
+                  _selectedTime.hour,
+                  _selectedTime.minute,
                 ),
-          ),
-          child: child!,
-        );
-      },
+                onDateTimeChanged: (DateTime dt) {
+                  tempTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
   }
 
   Future<void> _save() async {
@@ -84,9 +126,9 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -105,11 +147,14 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('New Medication',
-            style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary)),
+        title: const Text(
+          'New Medication',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -159,10 +204,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
-                            children: [
-                              _unitTab('mg'),
-                              _unitTab('ml'),
-                            ],
+                            children: [_unitTab('mg'), _unitTab('ml')],
                           ),
                         ),
                       ),
@@ -178,7 +220,9 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                     onTap: _pickTime,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 18),
+                        horizontal: 20,
+                        vertical: 18,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppColors.divider),
@@ -186,12 +230,18 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(timeStr,
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textPrimary)),
-                          const Icon(Icons.access_time,
-                              color: AppColors.textSecondary, size: 22),
+                          Text(
+                            timeStr,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.access_time,
+                            color: AppColors.textSecondary,
+                            size: 22,
+                          ),
                         ],
                       ),
                     ),
@@ -229,14 +279,19 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   textStyle: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w700),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 child: _saving
                     ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: Colors.white))
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text('Save Medication'),
               ),
             ),
@@ -247,12 +302,15 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   }
 
   Widget _label(String text) {
-    return Text(text,
-        style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-            letterSpacing: 1.2));
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textSecondary,
+        letterSpacing: 1.2,
+      ),
+    );
   }
 
   Widget _unitTab(String unit) {
@@ -266,18 +324,26 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
             color: selected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: selected
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4, offset: const Offset(0, 1))]
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
                 : null,
           ),
           child: Center(
-            child: Text(unit,
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected
-                        ? AppColors.primaryDark
-                        : AppColors.textSecondary)),
+            child: Text(
+              unit,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? AppColors.primaryDark
+                    : AppColors.textSecondary,
+              ),
+            ),
           ),
         ),
       ),
