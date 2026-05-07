@@ -37,40 +37,48 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: medications.isEmpty
             ? _EmptyState()
-            : CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: _Header(
-                      adherence: adherence,
-                      takenCount: takenCount,
-                      totalCount: totalMeds,
+            : Column(
+                children: [
+                  _Header(
+                    adherence: adherence,
+                    takenCount: takenCount,
+                    totalCount: totalMeds,
+                  ),
+                  Expanded(
+                    child: CustomScrollView(
+                      slivers: [
+                        if (upcoming.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: _SectionTitle('UPCOMING'),
+                          ),
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) => _UpcomingCard(medication: upcoming[i]),
+                              childCount: upcoming.length,
+                            ),
+                          ),
+                        ],
+                        if (completed.isNotEmpty) ...[
+                          const SliverToBoxAdapter(
+                            child: _SectionTitle('COMPLETED'),
+                          ),
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate((_, i) {
+                              final med = completed[i];
+                              final log = doseLogs.firstWhere(
+                                (l) => l.medicationId == med.id,
+                              );
+                              return _CompletedCard(
+                                medication: med,
+                                doseLog: log,
+                              );
+                            }, childCount: completed.length),
+                          ),
+                        ],
+                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                      ],
                     ),
                   ),
-                  if (upcoming.isNotEmpty) ...[
-                    const SliverToBoxAdapter(child: _SectionTitle('UPCOMING')),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => _UpcomingCard(medication: upcoming[i]),
-                        childCount: upcoming.length,
-                      ),
-                    ),
-                  ],
-                  if (completed.isNotEmpty) ...[
-                    const SliverToBoxAdapter(child: _SectionTitle('COMPLETED')),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) {
-                          final med = completed[i];
-                          final log = doseLogs.firstWhere(
-                            (l) => l.medicationId == med.id,
-                          );
-                          return _CompletedCard(medication: med, doseLog: log);
-                        },
-                        childCount: completed.length,
-                      ),
-                    ),
-                  ],
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
       ),
@@ -87,16 +95,26 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.medication_outlined, size: 80,
-                color: AppColors.textHint.withValues(alpha: 0.5)),
+            Icon(
+              Icons.medication_outlined,
+              size: 80,
+              color: AppColors.textHint.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 24),
-            const Text('No medications yet',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
+            const Text(
+              'No medications yet',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text('Tap the + button to add your first medication',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+            const Text(
+              'Tap the + button to add your first medication',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+            ),
           ],
         ),
       ),
@@ -108,71 +126,112 @@ class _Header extends StatelessWidget {
   final double adherence;
   final int takenCount;
   final int totalCount;
-  const _Header({required this.adherence, required this.takenCount,
-      required this.totalCount});
+  const _Header({
+    required this.adherence,
+    required this.takenCount,
+    required this.totalCount,
+  });
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+      //margin: const EdgeInsets.all(16),
+      //padding: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: AppColors.headerBg, borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Today', style: TextStyle(fontSize: 28,
-                      fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                  Text(DateFormat('EEEE, MMM d').format(now),
-                      style: const TextStyle(fontSize: 15,
-                          color: AppColors.textSecondary)),
-                ],
-              ),
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(shape: BoxShape.circle,
-                    color: AppColors.textSecondary.withValues(alpha: 0.2)),
-                child: const Icon(Icons.person, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: CircularPercentIndicator(
-              radius: 80, lineWidth: 10,
-              percent: adherence.clamp(0.0, 1.0),
-              center: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${(adherence * 100).round()}%',
-                      style: const TextStyle(fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary)),
-                  const Text('ADHERENCE', style: TextStyle(fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary, letterSpacing: 1.2)),
-                ],
-              ),
-              progressColor: AppColors.primaryDark,
-              backgroundColor: AppColors.ringTrack,
-              circularStrokeCap: CircularStrokeCap.round,
-              animation: true, animationDuration: 800,
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Today',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      DateFormat('EEEE, MMM d').format(now),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.textSecondary.withValues(alpha: 0.2),
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text('$takenCount of $totalCount medications taken',
-                style: const TextStyle(fontSize: 15,
-                    color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
-          ),
-        ],
+            const SizedBox(height: 24),
+            Center(
+              child: CircularPercentIndicator(
+                radius: 80,
+                lineWidth: 10,
+                percent: adherence.clamp(0.0, 1.0),
+                center: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${(adherence * 100).round()}%',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const Text(
+                      'ADHERENCE',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                progressColor: AppColors.primaryDark,
+                backgroundColor: AppColors.ringTrack,
+                circularStrokeCap: CircularStrokeCap.round,
+                animation: true,
+                animationDuration: 800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                '$takenCount of $totalCount medications taken',
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -185,9 +244,15 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Text(title, style: const TextStyle(fontSize: 13,
-          fontWeight: FontWeight.w700, color: AppColors.textSecondary,
-          letterSpacing: 1.5)),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
+          letterSpacing: 1.5,
+        ),
+      ),
     );
   }
 }
@@ -201,40 +266,85 @@ class _UpcomingCard extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider)),
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        //borderRadius: BorderRadius.circular(16),
+        //border: Border.all(color: AppColors.divider),
+      ),
       child: Column(
         children: [
-          Row(children: [
-            Container(width: 48, height: 48,
-                decoration: BoxDecoration(color: AppColors.iconBg,
-                    borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.medication_outlined,
-                    color: AppColors.primaryDark, size: 24)),
-            const SizedBox(width: 14),
-            Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(medication.name, style: const TextStyle(fontSize: 17,
-                  fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              Text(_dosageLabel(medication),
-                  style: const TextStyle(fontSize: 14,
-                      color: AppColors.textSecondary)),
-            ])),
-            Text(_fmt(medication.scheduledTime),
-                style: const TextStyle(fontSize: 15,
-                    fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-          ]),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.medication_outlined,
+                  color: AppColors.primaryDark,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      medication.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      _dosageLabel(medication),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                _fmt(medication.scheduledTime),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: _ActionBtn('Skipped', true, () => ref
-                .read(doseLogListProvider.notifier)
-                .logDose(medicationId: medication.id, status: 'skipped'))),
-            const SizedBox(width: 12),
-            Expanded(child: _ActionBtn('Taken', false, () => ref
-                .read(doseLogListProvider.notifier)
-                .logDose(medicationId: medication.id, status: 'taken'))),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionBtn(
+                  'Skipped',
+                  true,
+                  () => ref
+                      .read(doseLogListProvider.notifier)
+                      .logDose(medicationId: medication.id, status: 'skipped'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionBtn(
+                  'Taken',
+                  false,
+                  () => ref
+                      .read(doseLogListProvider.notifier)
+                      .logDose(medicationId: medication.id, status: 'taken'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -250,45 +360,83 @@ class _CompletedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTaken = doseLog.status == 'taken';
     final actionStr = doseLog.actionTime != null
-        ? DateFormat('h:mm a').format(doseLog.actionTime!) : '';
+        ? DateFormat('h:mm a').format(doseLog.actionTime!)
+        : '';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider)),
-      child: Row(children: [
-        Container(width: 48, height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-                color: isTaken ? AppColors.taken.withValues(alpha: 0.12)
-                    : AppColors.skipped.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12)),
+              color: isTaken
+                  ? AppColors.taken.withValues(alpha: 0.12)
+                  : AppColors.skipped.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(
-                isTaken ? Icons.check_circle_outline
-                    : Icons.remove_circle_outline,
-                color: isTaken ? AppColors.taken : AppColors.skippedText,
-                size: 24)),
-        const SizedBox(width: 14),
-        Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(medication.name, style: TextStyle(fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary.withValues(alpha: 0.7),
-              decoration: isTaken ? TextDecoration.lineThrough : null)),
-          Text(_dosageLabel(medication),
-              style: const TextStyle(fontSize: 14,
-                  color: AppColors.textSecondary)),
-        ])),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(_fmt(medication.scheduledTime),
-              style: const TextStyle(fontSize: 15,
-                  fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-          if (actionStr.isNotEmpty)
-            Text('${isTaken ? "Taken" : "Skipped"} $actionStr',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
-                    color: isTaken ? AppColors.taken : AppColors.skippedText)),
-        ]),
-      ]),
+              isTaken
+                  ? Icons.check_circle_outline
+                  : Icons.remove_circle_outline,
+              color: isTaken ? AppColors.taken : AppColors.skippedText,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  medication.name,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary.withValues(alpha: 0.7),
+                    decoration: isTaken ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                Text(
+                  _dosageLabel(medication),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _fmt(medication.scheduledTime),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              if (actionStr.isNotEmpty)
+                Text(
+                  '${isTaken ? "Taken" : "Skipped"} $actionStr',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isTaken ? AppColors.taken : AppColors.skippedText,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -302,22 +450,34 @@ class _ActionBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSkip ? AppColors.skipped
+      color: isSkip
+          ? AppColors.skipped
           : AppColors.taken.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(12),
-      child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               if (!isSkip) ...[
                 const Icon(Icons.check, size: 18, color: AppColors.taken),
                 const SizedBox(width: 6),
               ],
-              Text(label, style: TextStyle(fontSize: 15,
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: isSkip ? AppColors.skippedText : AppColors.taken)),
-            ]),
-          )),
+                  color: isSkip ? AppColors.skippedText : AppColors.taken,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -327,11 +487,14 @@ String _fmt(String t) {
     final p = t.split(':');
     final d = DateTime(2000, 1, 1, int.parse(p[0]), int.parse(p[1]));
     return DateFormat('h:mm a').format(d);
-  } catch (_) { return t; }
+  } catch (_) {
+    return t;
+  }
 }
 
 String _dosageLabel(Medication m) {
   final d = m.dosage.truncateToDouble() == m.dosage
-      ? m.dosage.toInt().toString() : m.dosage.toString();
+      ? m.dosage.toInt().toString()
+      : m.dosage.toString();
   return '$d${m.unit} • Tablet';
 }
