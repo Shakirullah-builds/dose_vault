@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Dose Tracker</string>
+	<string>DoseTrack</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>dose_tracker</string>
+	<string>DoseTrack</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,6 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	
+	<!-- Required: Tell iOS why the app needs to show notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>	
+
+	<!-- Optional: Allow app to show notifications in lock screen -->
+	<key>UIUserNotificationTypes</key>
+	<array>
+		<string>UIUserNotificationTypeAlert</string>
+		<string>UIUserNotificationTypeSound</string>
+		<string>UIUserNotificationTypeBadge</string>
+	</array>	
 </dict>
 </plist>
