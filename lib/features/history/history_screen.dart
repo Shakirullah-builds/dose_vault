@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/providers/medication_provider.dart';
-import 'package:dose_tracker/core/theme/app_theme.dart';
+import 'package:dose_tracker/core/constants/app_colors.dart'; 
 
 /// History screen — shows all dose logs grouped by date.
 class HistoryScreen extends ConsumerWidget {
