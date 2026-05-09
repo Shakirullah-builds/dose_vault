@@ -64,6 +64,37 @@ class HistoryScreen extends ConsumerWidget {
                           date: date,
                           logs: logs,
                           medMap: medMap,
+                          // HOISTED LOGIC: The delete action now runs in the top-level screen!
+                          onLogDeleted: (DoseLog deletedLog) {
+                            ref
+                                .read(doseLogListProvider.notifier)
+                                .deleteLog(deletedLog.id);
+
+                            final messenger = ScaffoldMessenger.of(context);
+                            messenger.clearSnackBars();
+
+                            final snackBar = SnackBar(
+                              duration: const Duration(seconds: 3),
+                              content: const Text('Dose log removed.'),
+                              action: SnackBarAction(
+                                label: 'UNDO',
+                                onPressed: () {
+                                  // Because this is inside HistoryScreen, the ref NEVER dies!
+                                  ref
+                                      .read(doseLogListProvider.notifier)
+                                      .restoreLog(deletedLog);
+                                },
+                              ),
+                            );
+
+                            final controller = messenger.showSnackBar(snackBar);
+
+                            Future.delayed(const Duration(seconds: 3), () {
+                              try {
+                                controller.close();
+                              } catch (_) {}
+                            });
+                          },
                         );
                       },
                     ),
@@ -79,11 +110,13 @@ class _DateGroup extends ConsumerWidget {
   final DateTime date;
   final List<DoseLog> logs;
   final Map<String, Medication> medMap;
+  final Function(DoseLog) onLogDeleted;
 
   const _DateGroup({
     required this.date,
     required this.logs,
     required this.medMap,
+    required this.onLogDeleted,
   });
 
   @override
@@ -124,34 +157,7 @@ class _DateGroup extends ConsumerWidget {
           return _HistoryTile(
             log: log,
             medication: med,
-            onDelete: () {
-              final deletedLog = log;
-              ref.read(doseLogListProvider.notifier).deleteLog(deletedLog.id);
-
-              final messenger = ScaffoldMessenger.of(context);
-              messenger.clearSnackBars();
-
-              final snackBar = SnackBar(
-                duration: const Duration(seconds: 4),
-                //behavior: SnackBarBehavior.floating,
-                content: const Text('Dose log removed.'),
-                action: SnackBarAction(
-                  label: 'UNDO',
-                  onPressed: () {
-                    ref.read(doseLogListProvider.notifier).restoreLog(deletedLog);
-                  },
-                ),
-              );
-
-              final controller = messenger.showSnackBar(snackBar);
-
-              // THE OVERRIDE
-              Future.delayed(const Duration(seconds: 4), () {
-                try {
-                  controller.close();
-                } catch (_) {}
-              });
-            },
+            onDelete: () => onLogDeleted(log),
           );
         }),
       ],
@@ -168,7 +174,11 @@ class _HistoryTile extends StatelessWidget {
   final DoseLog log;
   final Medication? medication;
   final VoidCallback onDelete;
-  const _HistoryTile({required this.log, this.medication, required this.onDelete});
+  const _HistoryTile({
+    required this.log,
+    this.medication,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -183,9 +193,7 @@ class _HistoryTile extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: AppColors.missed,
-        ),
+        decoration: BoxDecoration(color: AppColors.missed),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         child: const Icon(Icons.undo, color: Colors.white),
@@ -193,87 +201,87 @@ class _HistoryTile extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.cardBg,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        //borderRadius: BorderRadius.circular(14),
-        //border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            //padding: ,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isTaken
-                  ? AppColors.taken.withValues(alpha: 0.12)
-                  : AppColors.missed.withValues(alpha: 0.1),
-              // borderRadius: BorderRadius.circular(10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(
-              isTaken
-                  ? Icons.check_circle_outline
-                  : Icons.remove_circle_outline,
-              color: isTaken ? AppColors.taken : AppColors.skippedText,
-              size: 22,
+          ],
+          //borderRadius: BorderRadius.circular(14),
+          //border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              //padding: ,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isTaken
+                    ? AppColors.taken.withValues(alpha: 0.12)
+                    : AppColors.missed.withValues(alpha: 0.1),
+                // borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                isTaken
+                    ? Icons.check_circle_outline
+                    : Icons.remove_circle_outline,
+                color: isTaken ? AppColors.taken : AppColors.skippedText,
+                size: 22,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (medication != null)
+                    Text(
+                      '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 15,
+                  isTaken ? 'Taken' : 'Skipped',
+                  style: TextStyle(
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: isTaken ? AppColors.taken : AppColors.skippedText,
                   ),
                 ),
-                if (medication != null)
+                if (timeStr.isNotEmpty)
                   Text(
-                    '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}',
+                    timeStr,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                isTaken ? 'Taken' : 'Skipped',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isTaken ? AppColors.taken : AppColors.skippedText,
-                ),
-              ),
-              if (timeStr.isNotEmpty)
-                Text(
-                  timeStr,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

@@ -74,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                                   messenger.clearSnackBars();
 
                                   final snackBar = SnackBar(
-                                    duration: const Duration(seconds: 4),
+                                    duration: const Duration(seconds: 3),
                                     //behavior: SnackBarBehavior.floating,
                                     content: const Text('Medication deleted.'),
                                     action: SnackBarAction(
@@ -93,7 +93,7 @@ class HomeScreen extends ConsumerWidget {
                                   final controller = messenger.showSnackBar(snackBar);
 
                                   // THE OVERRIDE
-                                  Future.delayed(const Duration(seconds: 4), () {
+                                  Future.delayed(const Duration(seconds: 3), () {
                                     try {
                                       controller.close();
                                     } catch (_) {}
@@ -130,7 +130,7 @@ class HomeScreen extends ConsumerWidget {
                                   messenger.clearSnackBars();
 
                                   final snackBar = SnackBar(
-                                    duration: const Duration(seconds: 4),
+                                    duration: const Duration(seconds: 3),
                                    // behavior: SnackBarBehavior.floating,
                                     content: const Text('Medication deleted.'),
                                     action: SnackBarAction(
@@ -149,7 +149,7 @@ class HomeScreen extends ConsumerWidget {
                                   final controller = messenger.showSnackBar(snackBar);
 
                                   // THE OVERRIDE
-                                  Future.delayed(const Duration(seconds: 4), () {
+                                  Future.delayed(const Duration(seconds: 3), () {
                                     try {
                                       controller.close();
                                     } catch (_) {}
