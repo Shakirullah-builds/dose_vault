@@ -98,13 +98,17 @@ class NotificationService {
   Future<void> scheduleDoseReminder(Medication med) async {
     final scheduledTZ = _nextInstanceOfTime(med.scheduledTime);
 
-    final androidDetails = AndroidNotificationDetails(
+   final androidDetails = const AndroidNotificationDetails(
       'dose_reminders', // channel ID
       'Dose Reminders', // channel name
       channelDescription: 'Daily medication dose reminders',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max, // UPGRADED from high
+      priority: Priority.max,     // UPGRADED from high
+      visibility: NotificationVisibility.public, // NEW: Forces it onto the lock screen
+      category: AndroidNotificationCategory.alarm, // NEW: Tells Android this is a medical alarm, not a text
       playSound: true,
+      enableVibration: true,
+      fullScreenIntent: true, // NEW: Wakes the device up
     );
 
     const iosDetails = DarwinNotificationDetails(
