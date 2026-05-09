@@ -41,7 +41,7 @@ class AppTheme {
         shape: CircleBorder(),
       ),
       snackBarTheme: const SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
+        //behavior: SnackBarBehavior.floating,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: false,

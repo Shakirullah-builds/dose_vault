@@ -11,12 +11,12 @@ class MedicationListNotifier extends Notifier<List<Medication>> {
 
   Future<void> addMedication(Medication med) async {
     await HiveService.addMedication(med);
-    state = HiveService.getAllMedications();
+    state = [...state, med];
   }
 
   Future<void> removeMedication(String id) async {
     await HiveService.deleteMedication(id);
-    state = HiveService.getAllMedications();
+    state = state.where((m) => m.id != id).toList();
     // Also refresh dose logs since some were deleted
     ref.invalidate(doseLogListProvider);
   }
@@ -39,17 +39,18 @@ class DoseLogListNotifier extends Notifier<List<DoseLog>> {
     required String status,
   }) async {
     await HiveService.logDose(medicationId: medicationId, status: status);
-    state = HiveService.getDoseLogsForDate(DateTime.now());
+    // Refresh to get the updated log with its generated ID from Hive, or we can just pull fresh
+    state = [...HiveService.getDoseLogsForDate(DateTime.now())];
   }
 
   Future<void> deleteLog(String logId) async {
     await HiveService.deleteDoseLog(logId);
-    state = HiveService.getDoseLogsForDate(DateTime.now());
+    state = state.where((l) => l.id != logId).toList();
   }
 
   Future<void> restoreLog(DoseLog log) async {
     await HiveService.restoreDoseLog(log);
-    state = HiveService.getDoseLogsForDate(DateTime.now());
+    state = [...state, log];
   }
 
   void refresh() {

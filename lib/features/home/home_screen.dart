@@ -75,7 +75,7 @@ class HomeScreen extends ConsumerWidget {
 
                                   final snackBar = SnackBar(
                                     duration: const Duration(seconds: 4),
-                                    behavior: SnackBarBehavior.floating,
+                                    //behavior: SnackBarBehavior.floating,
                                     content: const Text('Medication deleted.'),
                                     action: SnackBarAction(
                                       label: 'UNDO',
@@ -90,13 +90,13 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   );
 
-                                  messenger.showSnackBar(snackBar);
+                                  final controller = messenger.showSnackBar(snackBar);
 
                                   // THE OVERRIDE
                                   Future.delayed(const Duration(seconds: 4), () {
-                                    if (context.mounted) {
-                                      messenger.hideCurrentSnackBar();
-                                    }
+                                    try {
+                                      controller.close();
+                                    } catch (_) {}
                                   });
                                 },
                               ),
@@ -131,7 +131,7 @@ class HomeScreen extends ConsumerWidget {
 
                                   final snackBar = SnackBar(
                                     duration: const Duration(seconds: 4),
-                                    behavior: SnackBarBehavior.floating,
+                                   // behavior: SnackBarBehavior.floating,
                                     content: const Text('Medication deleted.'),
                                     action: SnackBarAction(
                                       label: 'UNDO',
@@ -146,13 +146,13 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   );
 
-                                  messenger.showSnackBar(snackBar);
+                                  final controller = messenger.showSnackBar(snackBar);
 
                                   // THE OVERRIDE
                                   Future.delayed(const Duration(seconds: 4), () {
-                                    if (context.mounted) {
-                                      messenger.hideCurrentSnackBar();
-                                    }
+                                    try {
+                                      controller.close();
+                                    } catch (_) {}
                                   });
                                 },
                               );
