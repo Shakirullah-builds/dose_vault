@@ -41,6 +41,11 @@ class HiveService {
     }
   }
 
+  static Future<void> saveAllMedications(List<Medication> meds) async {
+    final Map<String, Medication> map = {for (var m in meds) m.id: m};
+    await _medBox.putAll(map);
+  }
+
   // ── DoseLog CRUD ─────────────────────────────────────────────────
 
   static List<DoseLog> getAllDoseLogs() {
@@ -99,6 +104,11 @@ class HiveService {
 
   static Future<void> restoreDoseLog(DoseLog log) async {
     await _logBox.put(log.id, log);
+  }
+
+  static Future<void> saveAllDoseLogs(List<DoseLog> logs) async {
+    final Map<String, DoseLog> map = {for (var l in logs) l.id: l};
+    await _logBox.putAll(map);
   }
 
   static String generateId() => _uuid.v4();

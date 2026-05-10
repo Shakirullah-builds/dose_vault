@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/providers/medication_provider.dart';
 import 'package:dose_tracker/core/constants/app_colors.dart';
+import 'package:dose_tracker/core/services/supabase_sync_service.dart';
 
 /// History screen — shows all dose logs grouped by date.
 class HistoryScreen extends ConsumerWidget {
@@ -14,6 +15,7 @@ class HistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final allLogs = ref.watch(allDoseLogsProvider);
     final medications = ref.watch(medicationListProvider);
+    final isSyncing = ref.watch(isInitialSyncingProvider);
 
     // Build a lookup map for medication names
     final medMap = <String, Medication>{};
@@ -49,11 +51,22 @@ class HistoryScreen extends ConsumerWidget {
             ),
             Expanded(
               child: sortedDates.isEmpty
-                  ? CustomEmptyState(
-                      title: 'No history yet',
-                      description: 'Your dose logs will appear here',
-                      icon: Icons.history_outlined,
-                    )
+                  ? (isSyncing
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Restoring data...'),
+                            ],
+                          ),
+                        )
+                      : const CustomEmptyState(
+                          title: 'No history yet',
+                          description: 'Your dose logs will appear here',
+                          icon: Icons.history_outlined,
+                        ))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: sortedDates.length,

@@ -7,6 +7,7 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/providers/medication_provider.dart';
 import 'package:dose_tracker/core/services/notification_service.dart';
+import 'package:dose_tracker/core/services/supabase_sync_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +16,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final medications = ref.watch(medicationListProvider);
     final doseLogs = ref.watch(doseLogListProvider);
+    final isSyncing = ref.watch(isInitialSyncingProvider);
     final upcoming = <Medication>[];
     final completed = <Medication>[];
 
@@ -38,11 +40,22 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         child: medications.isEmpty
-            ? CustomEmptyState(
-                title: 'No medications yet',
-                description: 'Tap the + button to add your first medication',
-                icon: Icons.medication_outlined,
-              )
+            ? (isSyncing
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Restoring data...'),
+                      ],
+                    ),
+                  )
+                : const CustomEmptyState(
+                    title: 'No medications yet',
+                    description: 'Tap the + button to add your first medication',
+                    icon: Icons.medication_outlined,
+                  ))
             : Column(
                 children: [
                   _Header(

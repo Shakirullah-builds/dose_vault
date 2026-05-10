@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dose_tracker/core/services/hive_service.dart';
+import 'package:dose_tracker/core/models/medication.dart';
+
+final isInitialSyncingProvider = StateProvider<bool>((ref) => false);
 
 /// Provider for the Supabase Sync Service
 final supabaseSyncServiceProvider = Provider<SupabaseSyncService>((ref) {
@@ -13,6 +17,61 @@ class SupabaseSyncService {
   final SupabaseClient _supabase;
 
   SupabaseSyncService(this._supabase);
+
+  /// Fetches all cloud data from Supabase and merges it into the local Hive boxes.
+  Future<void> syncDownOnLaunch(WidgetRef ref, {required VoidCallback onComplete, required Function(String) onError}) async {
+    ref.read(isInitialSyncingProvider.notifier).state = true;
+    try {
+      // 1. Fetch Medications
+      final medsData = await _supabase.from('medications').select();
+      final List<Medication> medsToSave = [];
+      for (final json in medsData) {
+        medsToSave.add(Medication(
+          id: json['id'],
+          name: json['name'],
+          dosage: (json['dosage'] as num).toDouble(),
+          unit: json['unit'],
+          scheduledTime: json['scheduled_time'],
+          instructions: json['instructions'],
+          createdAt: DateTime.parse(json['created_at']),
+        ));
+      }
+
+      // 2. Fetch Dose Logs
+      final logsData = await _supabase.from('dose_logs').select();
+      final List<DoseLog> logsToSave = [];
+      for (final json in logsData) {
+        logsToSave.add(DoseLog(
+          id: json['id'],
+          medicationId: json['medication_id'],
+          date: DateTime.parse(json['date']),
+          status: json['status'],
+          actionTime: json['action_time'] != null ? DateTime.parse(json['action_time']) : null,
+        ));
+      }
+
+      // 3. Save to Hive
+      await HiveService.saveAllMedications(medsToSave);
+      await HiveService.saveAllDoseLogs(logsToSave);
+
+      debugPrint('Sync: Successfully synced down from Supabase on launch.');
+      
+      // 4. Trigger UI update
+      onComplete();
+
+    } on SocketException catch (_) {
+      onError("Offline: Could not check for backed-up data.");
+    } catch (e) {
+      // Some networking errors in Supabase might not surface as a pure SocketException depending on the platform/wrapper
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+        onError("Offline: Could not check for backed-up data.");
+      } else {
+        debugPrint('Sync Error (DownSync): $e');
+      }
+    } finally {
+      ref.read(isInitialSyncingProvider.notifier).state = false;
+    }
+  }
 
   /// Reads all medications from Hive and performs an upsert to the 'medications' table.
   Future<void> syncMedicationsUp() async {
