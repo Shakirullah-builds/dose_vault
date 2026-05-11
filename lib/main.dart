@@ -25,6 +25,12 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // 1.5 Silent Anonymous Login
+  if (Supabase.instance.client.auth.currentSession == null) {
+    await Supabase.instance.client.auth.signInAnonymously();
+  }
+
   // 2. Initialize Timezones (CRITICAL for exact background alarms)
   tz.initializeTimeZones();
 

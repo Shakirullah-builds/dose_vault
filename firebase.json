@@ -1,0 +1,22 @@
+{
+    "flutter": {
+        "platforms": {
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "dosetrack-3f033",
+                    "configurations": {
+                        "android": "1:751274060697:android:3614ee0346824b773f8108",
+                        "ios": "1:751274060697:ios:792c6f067abc53f43f8108"
+                    }
+                }
+            },
+            "android": {
+                "default": {
+                    "projectId": "dosetrack-3f033",
+                    "appId": "1:751274060697:android:3614ee0346824b773f8108",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            }
+        }
+    }
+}

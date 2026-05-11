@@ -22,6 +22,11 @@ class SupabaseSyncService {
   Future<void> syncDownOnLaunch(WidgetRef ref, {required VoidCallback onComplete, required Function(String) onError}) async {
     ref.read(isInitialSyncingProvider.notifier).state = true;
     try {
+      if (_supabase.auth.currentUser == null) {
+        onComplete();
+        return;
+      }
+
       // 1. Fetch Medications
       final medsData = await _supabase.from('medications').select();
       final List<Medication> medsToSave = [];
@@ -81,8 +86,10 @@ class SupabaseSyncService {
 
       final List<Map<String, dynamic>> medsData = meds.map((m) => {
         'id': m.id,
+        'user_id': _supabase.auth.currentUser!.id,
         'name': m.name,
         'dosage': m.dosage,
+
         'unit': m.unit,
         'scheduled_time': m.scheduledTime,
         'instructions': m.instructions,
@@ -106,6 +113,7 @@ class SupabaseSyncService {
 
       final List<Map<String, dynamic>> logsData = logs.map((l) => {
         'id': l.id,
+        'user_id': _supabase.auth.currentUser!.id,
         'medication_id': l.medicationId,
         'date': l.date.toIso8601String(),
         'status': l.status,

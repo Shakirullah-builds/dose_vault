@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "751274060697",
+    "project_id": "dosetrack-3f033",
+    "storage_bucket": "dosetrack-3f033.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:751274060697:android:3614ee0346824b773f8108",
+        "android_client_info": {
+          "package_name": "com.example.dose_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKwPAECr-ZntqKTyNIMs1vpXa-GW0ljIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
