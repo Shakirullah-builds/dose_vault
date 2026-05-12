@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dose_tracker/app_shell.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
 import 'package:dose_tracker/core/constants/app_colors.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
 
   @override
@@ -96,55 +100,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: AppColors.textSecondary,
               ),
               onTap: () {
-                showCupertinoDialog(
+                _showCustomCupertinoDialog(
                   context: context,
-                  builder: (context) => CupertinoAlertDialog(
-                    title: const CustomText(
-                      textAlign: TextAlign.center,
-                      'External Link',
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                    content: const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: CustomText(
-                        textAlign: TextAlign.center,
-                        'You are leaving the app to view our Privacy Policy in a secure browser. Continue?',
-                        fontSize: 13,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const CustomText(
-                          'Cancel',
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      CupertinoDialogAction(
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          try {
-                            final uri = Uri.parse(
-                              'https://docs.google.com/document/d/e/2PACX-1vS4aYvV4WILUamUkcJRdMoqRjoNugAAHcexCH8HCDH5YYwkjNBF1vYBrUc4UX_oPNaWtC9JhLmXSI0J/pub',
-                            );
-                            await launchUrl(uri);
-                          } catch (e) {
-                            debugPrint('Error launching URL: $e');
-                          }
-                        },
-                        child: const CustomText(
-                          'Open Browser',
-                          fontSize: 14,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  title: 'External Link',
+                  content:
+                      'You are leaving the app to view our Privacy Policy in a secure browser. Continue?',
+                  cancelText: 'Cancel',
+                  actionText: 'Open Browser',
+                  actionColor: AppColors.primary,
+                  onAction: (dialogContext) async {
+                    Navigator.of(dialogContext).pop();
+                    try {
+                      final uri = Uri.parse(
+                        'https://docs.google.com/document/d/e/2PACX-1vS4aYvV4WILUamUkcJRdMoqRjoNugAAHcexCH8HCDH5YYwkjNBF1vYBrUc4UX_oPNaWtC9JhLmXSI0J/pub',
+                      );
+                      await launchUrl(uri);
+                    } catch (e) {
+                      debugPrint('Error launching URL: $e');
+                    }
+                  },
                 );
               },
             ),
@@ -169,44 +143,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontWeight: FontWeight.w500,
                 color: Colors.red,
               ),
-              //trailing: const Icon(Icons.delete_forever, color: Colors.red),
               onTap: () {
-                showDialog(
+                _showCustomCupertinoDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const CustomText(
-                      'Are you sure?',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    content: const CustomText(
+                  title: 'Are you sure?',
+                  content:
                       'This will permanently delete all your medication data from this device and the cloud.',
-                      fontSize: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const CustomText(
-                          'Cancel',
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: Implement Supabase wipe and sign out
-                          Navigator.of(context).pop();
-                        },
-                        child: const CustomText(
-                          'Wipe Data',
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  cancelText: 'Cancel',
+                  actionText: 'Wipe Data',
+                  loadingActionText: 'Wiping...',
+                  actionColor: Colors.red,
+                  onAction: (dialogContext) async {
+                    try {
+                      final supabase = Supabase.instance.client;
+                      // Step A (Cloud Wipe)
+                      final userId = supabase.auth.currentUser?.id;
+                      if (userId != null) {
+                        await supabase
+                            .from('medications')
+                            .delete()
+                            .eq('user_id', userId);
+                      }
+
+                      // Step B (Local Wipe)
+                      await Hive.deleteFromDisk();
+
+                      // Step C (Identity Wipe)
+                      await supabase.auth.signOut();
+
+                      // Step D (Navigation Reset)
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const AppShell()),
+                          (route) => false,
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Wipe Error: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: CustomText(
+                              'Failed to wipe data. Please check your connection and try again.',
+                              color: Colors.white,
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
                 );
               },
             ),
@@ -255,10 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.white,
-        child: child,
-      ),
+      child: Material(color: Colors.white, child: child),
     );
   }
 
@@ -271,6 +254,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, color: iconColor),
+    );
+  }
+
+  void _showCustomCupertinoDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String cancelText,
+    required String actionText,
+    String? loadingActionText,
+    required Color actionColor,
+    required Future<void> Function(BuildContext dialogContext) onAction,
+  }) {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return CupertinoAlertDialog(
+              title: CustomText(
+                textAlign: TextAlign.center,
+                title,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: CustomText(
+                  textAlign: TextAlign.center,
+                  content,
+                  fontSize: 13,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: CustomText(
+                    cancelText,
+                    fontSize: 14,
+                    color: isLoading
+                        ? AppColors.textHint
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                CupertinoDialogAction(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (loadingActionText != null) {
+                            setStateDialog(() => isLoading = true);
+                          }
+
+                          await onAction(context);
+
+                          if (loadingActionText != null && context.mounted) {
+                            setStateDialog(() => isLoading = false);
+                          }
+                        },
+                  child: CustomText(
+                    (isLoading && loadingActionText != null)
+                        ? loadingActionText
+                        : actionText,
+                    fontSize: 14,
+                    color: actionColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
