@@ -1,5 +1,5 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
-import 'package:dose_tracker/features/widgets/custom_empty_state.dart';
+import 'package:dose_tracker/core/widgets/custom_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
