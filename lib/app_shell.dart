@@ -6,6 +6,7 @@ import 'package:dose_tracker/features/history/history_screen.dart';
 import 'package:dose_tracker/features/medication/add_medication_screen.dart';
 import 'package:dose_tracker/core/services/supabase_sync_service.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
+import 'package:dose_tracker/features/settings/settings_screen.dart';
 
 /// The main app shell — hosts bottom nav, FAB, and screen switching.
 class AppShell extends ConsumerStatefulWidget {
@@ -19,6 +20,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   static const _screens = [
     HomeScreen(),
     HistoryScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -78,6 +80,10 @@ class _AppShellState extends ConsumerState<AppShell> {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
