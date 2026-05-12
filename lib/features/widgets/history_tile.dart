@@ -1,40 +1,42 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
 import 'package:dose_tracker/core/models/medication.dart';
-import 'package:dose_tracker/core/utils/medication_utils.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class CompletedCard extends StatelessWidget {
-  final Medication medication;
-  final DoseLog doseLog;
+class HistoryTile extends StatelessWidget {
+  final DoseLog log;
+  final Medication? medication;
   final VoidCallback onDelete;
-  const CompletedCard({
-    required this.medication,
-    required this.doseLog,
+  const HistoryTile({
+    required this.log,
+    this.medication,
     required this.onDelete,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isTaken = doseLog.status == 'taken';
-    final actionStr = doseLog.actionTime != null
-        ? DateFormat('h:mm a').format(doseLog.actionTime!)
+    final isTaken = log.status == 'taken';
+    final name = medication?.name ?? 'Unknown';
+    final timeStr = log.actionTime != null
+        ? DateFormat('h:mm a').format(log.actionTime!)
         : '';
+
     return Dismissible(
-      key: ValueKey('completed_${medication.id}'),
+      key: ValueKey('history_${log.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(color: AppColors.missed),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+        child: const Icon(Icons.undo, color: Colors.white),
       ),
       onDismissed: (_) => onDelete(),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.cardBg,
           boxShadow: [
@@ -44,44 +46,47 @@ class CompletedCard extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
+          //borderRadius: BorderRadius.circular(14),
+          //border: Border.all(color: AppColors.divider),
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 40,
+              height: 40,
+              //padding: ,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isTaken
                     ? AppColors.taken.withValues(alpha: 0.12)
-                    : AppColors.skipped.withValues(alpha: 0.5),
-                //borderRadius: BorderRadius.circular(12),
+                    : AppColors.missed.withValues(alpha: 0.1),
+                // borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 isTaken
-                    ? Icons.check_circle_rounded
-                    : Icons.remove_circle_rounded,
+                    ? Icons.check_circle_outline
+                    : Icons.remove_circle_outline,
                 color: isTaken ? AppColors.taken : AppColors.skippedText,
-                size: 24,
+                size: 22,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CustomText(
-                    medication.name,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary.withValues(alpha: 0.7),
-                    decoration: isTaken ? TextDecoration.lineThrough : null,
+                    name,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
-                  CustomText(
-                    dosageLabel(medication),
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
+                  if (medication != null)
+                    CustomText(
+                      '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}',
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                 ],
               ),
             ),
@@ -89,17 +94,16 @@ class CompletedCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 CustomText(
-                  fmt(medication.scheduledTime),
-                  fontSize: 15,
+                  isTaken ? 'Taken' : 'Skipped',
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary.withValues(alpha: 0.6),
+                  color: isTaken ? AppColors.taken : AppColors.skippedText,
                 ),
-                if (actionStr.isNotEmpty)
+                if (timeStr.isNotEmpty)
                   CustomText(
-                    '${isTaken ? "Taken" : "Skipped"} $actionStr',
+                    timeStr,
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isTaken ? AppColors.taken : AppColors.skippedText,
+                    color: AppColors.textSecondary,
                   ),
               ],
             ),
