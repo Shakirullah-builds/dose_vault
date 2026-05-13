@@ -1,3 +1,4 @@
+import 'package:dose_tracker/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dose_tracker/core/providers/medication_provider.dart';
@@ -66,7 +67,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         child: const Icon(Icons.add, size: 28),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        // selectedItemColor: AppColors.primaryDark,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppColors.primaryDark,
         // unselectedItemColor: AppColors.textHint,
         currentIndex: currentIndex,
         onTap: (i) => ref.read(bottomNavIndexProvider.notifier).state = i,

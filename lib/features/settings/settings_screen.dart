@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dose_tracker/core/services/hive_service.dart';
 import 'package:dose_tracker/app_shell.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
@@ -17,6 +18,54 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSettings();
+  }
+
+  Future<void> _initSettings() async {
+    // 1. First, quickly load the offline default from Hive so the UI renders instantly
+    final box = await Hive.openBox('settings');
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = box.get(
+          'notifications_enabled',
+          defaultValue: true,
+        );
+      });
+    }
+
+    // 2. Then, fetch the absolute truth from Supabase (The Cloud)
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId != null) {
+        // We use maybeSingle() so it doesn't crash if the row doesn't exist yet
+        final data = await supabase
+            .from('user_tokens')
+            .select('notifications_enabled')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (data != null && mounted) {
+          final cloudState = data['notifications_enabled'] as bool;
+
+          setState(() {
+            _notificationsEnabled = cloudState;
+          });
+
+          // Force Hive to synchronize with the cloud truth
+          await box.put('notifications_enabled', cloudState);
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch cloud settings: $e');
+      // If the user has no internet, it just safely relies on the Hive state we loaded in Step 1
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +116,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               trailing: Switch(
                 value: _notificationsEnabled,
                 activeThumbColor: AppColors.primary,
-                onChanged: (val) {
+                onChanged: (val) async {
+                  final previousValue = _notificationsEnabled;
+
+                  // Optimistic UI update
                   setState(() {
                     _notificationsEnabled = val;
                   });
+
+                  try {
+                    // Local Hive update
+                    final box = await Hive.openBox('settings');
+                    await box.put('notifications_enabled', val);
+
+                    // Cloud Sync
+                    final supabase = Supabase.instance.client;
+                    final userId = supabase.auth.currentUser?.id;
+                    if (userId != null) {
+                      await supabase
+                          .from('user_tokens')
+                          .update({'notifications_enabled': val})
+                          .eq('user_id', userId);
+                    }
+                  } catch (e) {
+                    debugPrint('Cloud sync error: $e');
+                    // Revert local state and Hive
+                    if (mounted) {
+                      setState(() {
+                        _notificationsEnabled = previousValue;
+                      });
+                      final box = await Hive.openBox('settings');
+                      await box.put('notifications_enabled', previousValue);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: CustomText(
+                            'Failed to sync settings with the cloud.',
+                            color: Colors.white,
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
             ),
@@ -112,7 +200,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Navigator.of(dialogContext).pop();
                     try {
                       final uri = Uri.parse(
-                        'https://docs.google.com/document/d/e/2PACX-1vS4aYvV4WILUamUkcJRdMoqRjoNugAAHcexCH8HCDH5YYwkjNBF1vYBrUc4UX_oPNaWtC9JhLmXSI0J/pub',
+                        'https://doc-hosting.flycricket.io/dosetrack-privacy-policy/eb3a8936-0772-4934-9e7d-86065794aa7f/privacy',
                       );
                       await launchUrl(uri);
                     } catch (e) {
@@ -364,7 +452,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             const SizedBox(
                               width: 13,
                               height: 13,
-                              child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Colors.red),),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.red,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             CustomText(
