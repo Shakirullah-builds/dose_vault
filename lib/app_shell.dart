@@ -68,7 +68,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primaryDark,
+        selectedItemColor: AppColors.primary,
         // unselectedItemColor: AppColors.textHint,
         currentIndex: currentIndex,
         onTap: (i) => ref.read(bottomNavIndexProvider.notifier).state = i,
