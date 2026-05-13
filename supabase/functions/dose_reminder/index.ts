@@ -26,7 +26,6 @@ serve(async (req) => {
     const currentTimeString = `${currentHour}:${currentMinute}`; 
 
     // 2. Find ONLY the medications scheduled for this exact minute
-    // (Using .ilike just in case your local app saved it with AM/PM like "08:30 AM")
     const { data: dueMedications, error: medError } = await supabase
       .from('medications')
       .select('user_id, name, dosage, unit')
@@ -42,14 +41,19 @@ serve(async (req) => {
     // 3. Extract the unique User IDs who need a reminder right now
     const userIds = [...new Set(dueMedications.map(m => m.user_id))];
 
-    // 4. Fetch the specific FCM tokens for those exact users
+    // 4. Fetch the specific FCM tokens for users WHO HAVE NOTIFICATIONS ENABLED
     const { data: tokens, error: tokenError } = await supabase
       .from('user_tokens')
       .select('fcm_token')
-      .in('user_id', userIds);
+      .in('user_id', userIds)
+      .eq('notifications_enabled', true); // <-- THE MAGIC LOCK
 
     if (tokenError) throw tokenError;
-    if (!tokens || tokens.length === 0) return new Response("No valid tokens found.", { status: 200 });
+    
+    // If users need pills, but they ALL turned off notifications, exit quietly!
+    if (!tokens || tokens.length === 0) {
+        return new Response("Tokens found, but all users have paused notifications.", { status: 200 });
+    }
 
     const fcmTokens = tokens.map(t => t.fcm_token);
 
@@ -65,7 +69,7 @@ serve(async (req) => {
     const response = await admin.messaging().sendEachForMulticast(payload);
 
     return new Response(
-      JSON.stringify({ success: true, targetedUsers: userIds.length, details: response }),
+      JSON.stringify({ success: true, targetedUsers: fcmTokens.length, details: response }),
       { headers: { "Content-Type": "application/json" } }
     );
 
