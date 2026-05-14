@@ -14,6 +14,8 @@ import 'package:dose_tracker/firebase_options.dart';
 import 'package:dose_tracker/core/services/supabase_sync_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dose_tracker/features/onboarding/onboarding_screen.dart';
 
 void main() async {
   // Ensure the native bridge is locked in before we run async code
@@ -62,6 +64,9 @@ void main() async {
   // Wipe legacy alarms to prevent conflicts with new push system
   await notificationService.cancelAllLocalAlarms();
 
+  final settingsBox = Hive.box('settings');
+  final hasSeenOnboarding = settingsBox.get('has_seen_onboarding', defaultValue: false);
+
   runApp(
     ProviderScope(
       overrides: [
@@ -71,7 +76,7 @@ void main() async {
         title: 'Dose Tracker',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const AppShell(),
+        home: hasSeenOnboarding ? const AppShell() : const OnboardingScreen(),
       ),
     ),
   );
