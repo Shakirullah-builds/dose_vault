@@ -37,7 +37,7 @@ class HistoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.scaffoldBg,
         centerTitle: true,
         title: const CustomText(
           'History',

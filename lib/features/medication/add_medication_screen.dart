@@ -104,8 +104,12 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
 
     final now = TimeOfDay.now();
     if (_selectedTime.hour < now.hour ||
-        (_selectedTime.hour == now.hour && _selectedTime.minute <= now.minute)) {
-      AppSnackBar.showError(context, 'Please select a future time so the alarm can trigger properly.');
+        (_selectedTime.hour == now.hour &&
+            _selectedTime.minute <= now.minute)) {
+      AppSnackBar.showError(
+        context,
+        'Please select a future time so the alarm can trigger properly.',
+      );
       return;
     }
 
@@ -145,157 +149,160 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   Widget build(BuildContext context) {
     final timeStr = _selectedTime.format(context);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),  
+      child: Scaffold(
         backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: const CustomText(
+            'New Medication',
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+          elevation: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppColors.divider),
+          ),
         ),
-        title: const CustomText(
-          'New Medication',
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.divider),
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Medication Name ──
-                  _label('MEDICATION NAME'),
-                  const SizedBox(height: 8),
-                  CustomTextField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    hintText: 'e.g., Amoxicillin',
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Dosage ──
-                  _label('DOSAGE'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextField(
-                          controller: _dosageController,
-                          keyboardType: TextInputType.number,
-                          hintText: '0',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.scaffoldBg,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [_unitTab('mg'), _unitTab('ml')],
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Medication Name ──
+                    _label('MEDICATION NAME'),
+                    const SizedBox(height: 8),
+                    CustomTextField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      hintText: 'e.g., Amoxicillin',
+                    ),
+      
+                    const SizedBox(height: 24),
+      
+                    // ── Dosage ──
+                    _label('DOSAGE'),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: CustomTextField(
+                            controller: _dosageController,
+                            keyboardType: TextInputType.number,
+                            hintText: '0',
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Scheduled Time ──
-                  _label('SCHEDULED TIME'),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _pickTime,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.divider),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          CustomText(
-                            timeStr,
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.scaffoldBg,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [_unitTab('mg'), _unitTab('ml')],
+                            ),
                           ),
-                          const Icon(
-                            Icons.access_time,
-                            color: AppColors.textSecondary,
-                            size: 22,
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+      
+                    const SizedBox(height: 24),
+      
+                    // ── Scheduled Time ──
+                    _label('SCHEDULED TIME'),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _pickTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CustomText(
+                              timeStr,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                            const Icon(
+                              Icons.access_time,
+                              color: AppColors.textSecondary,
+                              size: 22,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Instructions ──
-                  _label('INSTRUCTIONS (OPTIONAL)'),
-                  const SizedBox(height: 8),
-                  CustomTextField(
-                    controller: _instructionsController,
-                    maxLines: 4,
-                    hintText: 'e.g., Take with food',
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Save Button ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+      
+                    const SizedBox(height: 24),
+      
+                    // ── Instructions ──
+                    _label('INSTRUCTIONS (OPTIONAL)'),
+                    const SizedBox(height: 8),
+                    CustomTextField(
+                      controller: _instructionsController,
+                      maxLines: 4,
+                      hintText: 'e.g., Take with food',
+                    ),
+                  ],
                 ),
-                child: _saving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const CustomText('Save Medication'),
               ),
             ),
-          ),
-        ],
+      
+            // ── Save Button ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const CustomText('Save Medication'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

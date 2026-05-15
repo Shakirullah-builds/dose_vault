@@ -48,7 +48,7 @@ class Header extends StatelessWidget {
                   ),
                   CustomText(
                     DateFormat('EEEE, MMM d').format(now),
-                    fontWeight: FontWeight.w600,
+                    //fontWeight: FontWeight.normal,
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
@@ -59,11 +59,11 @@ class Header extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.textSecondary.withValues(alpha: 0.15),
+                  color: AppColors.primary,
                 ),
                 child: const Icon(
                   Icons.person_rounded,
-                  color: AppColors.textSecondary,
+                  color: AppColors.scaffoldBg,
                 ),
               ),
             ],
