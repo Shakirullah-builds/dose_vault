@@ -1,8 +1,8 @@
 import 'package:dose_tracker/core/widgets/custom_empty_state.dart';
 import 'package:dose_tracker/features/widgets/date_group.dart';
+import 'package:dose_tracker/features/widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/providers/medication_provider.dart';
 import 'package:dose_tracker/core/constants/app_colors.dart';
@@ -71,7 +71,8 @@ class HistoryScreen extends ConsumerWidget {
                           )
                         : const CustomEmptyState(
                             title: 'No History Yet',
-                            subtitle: 'Your medication history will appear here once you log a dose.',
+                            subtitle:
+                                'Your medication history will appear here once you log a dose.',
                             icon: Icons.history_rounded,
                           ))
                   : ListView.builder(
@@ -90,30 +91,15 @@ class HistoryScreen extends ConsumerWidget {
                                 .read(doseLogListProvider.notifier)
                                 .deleteLog(deletedLog.id);
 
-                            final messenger = ScaffoldMessenger.of(context);
-                            messenger.clearSnackBars();
-
-                            final snackBar = SnackBar(
-                              duration: const Duration(seconds: 3),
-                              content: const CustomText('Dose log removed.'),
-                              action: SnackBarAction(
-                                label: 'UNDO',
-                                onPressed: () {
-                                  // Because this is inside HistoryScreen, the ref NEVER dies!
-                                  ref
-                                      .read(doseLogListProvider.notifier)
-                                      .restoreLog(deletedLog);
-                                },
-                              ),
+                            AppSnackBar.showWithUndo(
+                              context,
+                              message: 'Dose log removed.',
+                              onUndo: () {
+                                ref
+                                    .read(doseLogListProvider.notifier)
+                                    .restoreLog(deletedLog);
+                              },
                             );
-
-                            final controller = messenger.showSnackBar(snackBar);
-
-                            Future.delayed(const Duration(seconds: 3), () {
-                              try {
-                                controller.close();
-                              } catch (_) {}
-                            });
                           },
                         );
                       },

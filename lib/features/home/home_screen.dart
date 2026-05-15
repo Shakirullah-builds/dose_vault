@@ -10,6 +10,7 @@ import 'package:dose_tracker/core/providers/medication_provider.dart';
 import 'package:dose_tracker/core/services/notification_service.dart';
 import 'package:dose_tracker/core/services/supabase_sync_service.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
+import 'package:dose_tracker/features/widgets/snackbar.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dose_tracker/features/medication/add_medication_screen.dart' as dose_tracker_add_medication;
@@ -208,47 +209,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                             .read(notificationServiceProvider)
                                             .cancelReminder(deletedMed.id);
 
-                                        final messenger = ScaffoldMessenger.of(
+                                        AppSnackBar.showWithUndo(
                                           context,
-                                        );
-                                        messenger.clearSnackBars();
-
-                                        final snackBar = SnackBar(
-                                          duration: const Duration(seconds: 3),
-                                          //behavior: SnackBarBehavior.floating,
-                                          content: const CustomText(
-                                            'Medication deleted.',
-                                          ),
-                                          action: SnackBarAction(
-                                            label: 'UNDO',
-                                            onPressed: () async {
-                                              await ref
-                                                  .read(
-                                                    medicationListProvider
-                                                        .notifier,
-                                                  )
-                                                  .addMedication(deletedMed);
-                                              await ref
-                                                  .read(
-                                                    notificationServiceProvider,
-                                                  )
-                                                  .scheduleDoseReminder(
-                                                    deletedMed,
-                                                  );
-                                            },
-                                          ),
-                                        );
-
-                                        final controller = messenger
-                                            .showSnackBar(snackBar);
-
-                                        // THE OVERRIDE
-                                        Future.delayed(
-                                          const Duration(seconds: 3),
-                                          () {
-                                            try {
-                                              controller.close();
-                                            } catch (_) {}
+                                          message: 'Medication deleted.',
+                                          onUndo: () async {
+                                            await ref
+                                                .read(
+                                                  medicationListProvider
+                                                      .notifier,
+                                                )
+                                                .addMedication(deletedMed);
+                                            await ref
+                                                .read(
+                                                  notificationServiceProvider,
+                                                )
+                                                .scheduleDoseReminder(
+                                                  deletedMed,
+                                                );
                                           },
                                         );
                                       },
@@ -281,47 +258,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                             .read(notificationServiceProvider)
                                             .cancelReminder(deletedMed.id);
 
-                                        final messenger = ScaffoldMessenger.of(
+                                        AppSnackBar.showWithUndo(
                                           context,
-                                        );
-                                        messenger.clearSnackBars();
-
-                                        final snackBar = SnackBar(
-                                          duration: const Duration(seconds: 3),
-                                          // behavior: SnackBarBehavior.floating,
-                                          content: const CustomText(
-                                            'Medication deleted.',
-                                          ),
-                                          action: SnackBarAction(
-                                            label: 'UNDO',
-                                            onPressed: () async {
-                                              await ref
-                                                  .read(
-                                                    medicationListProvider
-                                                        .notifier,
-                                                  )
-                                                  .addMedication(deletedMed);
-                                              await ref
-                                                  .read(
-                                                    notificationServiceProvider,
-                                                  )
-                                                  .scheduleDoseReminder(
-                                                    deletedMed,
-                                                  );
-                                            },
-                                          ),
-                                        );
-
-                                        final controller = messenger
-                                            .showSnackBar(snackBar);
-
-                                        // THE OVERRIDE
-                                        Future.delayed(
-                                          const Duration(seconds: 3),
-                                          () {
-                                            try {
-                                              controller.close();
-                                            } catch (_) {}
+                                          message: 'Medication deleted.',
+                                          onUndo: () async {
+                                            await ref
+                                                .read(
+                                                  medicationListProvider
+                                                      .notifier,
+                                                )
+                                                .addMedication(deletedMed);
+                                            await ref
+                                                .read(
+                                                  notificationServiceProvider,
+                                                )
+                                                .scheduleDoseReminder(
+                                                  deletedMed,
+                                                );
                                           },
                                         );
                                       },

@@ -1,3 +1,4 @@
+import 'package:dose_tracker/features/widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,22 +128,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                     } catch (e) {
                       debugPrint('Cloud sync error: $e');
-                      // Revert local state and Hive
-                      if (mounted) {
+                      // Revert Hive first (no context needed)
+                      final box = await Hive.openBox('settings');
+                      await box.put('notifications_enabled', previousValue);
+
+                      // Now check mounted once, with no await between
+                      // the check and the context usage
+                      if (context.mounted) {
                         setState(() {
                           _notificationsEnabled = previousValue;
                         });
-                        final box = await Hive.openBox('settings');
-                        await box.put('notifications_enabled', previousValue);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: CustomText(
-                              'Failed to sync settings with the cloud.',
-                              color: Colors.white,
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
+                        AppSnackBar.showError(
+                          context,
+                          'Failed to sync settings with the cloud.',
                         );
                       }
                     }
@@ -291,14 +289,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       } catch (e) {
                         debugPrint('Wipe Error: $e');
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: CustomText(
-                                'Failed to wipe data. Please check your connection and try again.',
-                                color: Colors.white,
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
+                          AppSnackBar.showError(
+                            context,
+                            'Failed to wipe data. Please check your connection and try again.',
                           );
                         }
                       }

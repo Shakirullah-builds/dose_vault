@@ -40,9 +40,9 @@ class AppTheme {
         elevation: 4,
         shape: CircleBorder(),
       ),
-      snackBarTheme: const SnackBarThemeData(
-        //behavior: SnackBarBehavior.floating,
-      ),
+      // snackBarTheme: const SnackBarThemeData(
+      //   //behavior: SnackBarBehavior.floating,
+      // ),
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
         contentPadding:

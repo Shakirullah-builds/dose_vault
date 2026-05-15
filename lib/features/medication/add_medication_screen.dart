@@ -1,4 +1,5 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
+import 'package:dose_tracker/features/widgets/snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,21 +98,14 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: CustomText('Please enter a medication name')),
-      );
+      AppSnackBar.show(context, 'Please enter a medication name');
       return;
     }
 
     final now = TimeOfDay.now();
     if (_selectedTime.hour < now.hour ||
         (_selectedTime.hour == now.hour && _selectedTime.minute <= now.minute)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: CustomText('Please select a future time so the alarm can trigger properly.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppSnackBar.showError(context, 'Please select a future time so the alarm can trigger properly.');
       return;
     }
 
@@ -140,9 +134,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: CustomText('Error saving: $e')));
+        AppSnackBar.showError(context, 'Error saving: $e');
       }
     } finally {
       if (mounted) setState(() => _saving = false);
