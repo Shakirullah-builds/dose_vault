@@ -1,4 +1,3 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,230 +88,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
       body: ListView(
+        padding: const EdgeInsets.all(20),
         children: [
-          // Section 1 - Preferences
-          _buildSectionTitle('Preferences', color: AppColors.textPrimary),
-          _buildListTileContainer(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-              leading: _buildLeadingIcon(
-                Icons.notifications_none,
-                AppColors.scaffoldBg,
-                AppColors.textPrimary,
-              ),
-              title: const CustomText(
-                'Notifications',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-              subtitle: const CustomText(
-                'Pause all medication reminders',
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-              trailing: Switch(
-                value: _notificationsEnabled,
-                activeThumbColor: AppColors.primary,
-                onChanged: (val) async {
-                  final previousValue = _notificationsEnabled;
+          // Section 1: Preferences
+          _buildSectionHeader('PREFERENCES', isFirst: true),
+          _SettingsCard(
+            children: [
+              _SettingsTile(
+                icon: Icons.notifications_active_rounded,
+                iconBgColor: AppColors.primary.withValues(alpha: 0.1),
+                iconColor: AppColors.primary,
+                title: 'Enable Notifications',
+                subtitle: 'Medication reminders and alerts',
+                trailing: Switch(
+                  value: _notificationsEnabled,
+                  activeThumbColor: AppColors.primary,
+                  onChanged: (val) async {
+                    final previousValue = _notificationsEnabled;
 
-                  // Optimistic UI update
-                  setState(() {
-                    _notificationsEnabled = val;
-                  });
+                    // Optimistic UI update
+                    setState(() {
+                      _notificationsEnabled = val;
+                    });
 
-                  try {
-                    // Local Hive update
-                    final box = await Hive.openBox('settings');
-                    await box.put('notifications_enabled', val);
-
-                    // Cloud Sync
-                    final supabase = Supabase.instance.client;
-                    final userId = supabase.auth.currentUser?.id;
-                    if (userId != null) {
-                      await supabase
-                          .from('user_tokens')
-                          .update({'notifications_enabled': val})
-                          .eq('user_id', userId);
-                    }
-                  } catch (e) {
-                    debugPrint('Cloud sync error: $e');
-                    // Revert local state and Hive
-                    if (mounted) {
-                      setState(() {
-                        _notificationsEnabled = previousValue;
-                      });
+                    try {
+                      // Local Hive update
                       final box = await Hive.openBox('settings');
-                      await box.put('notifications_enabled', previousValue);
+                      await box.put('notifications_enabled', val);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: CustomText(
-                            'Failed to sync settings with the cloud.',
-                            color: Colors.white,
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-              ),
-            ),
-          ),
-
-          // Section 2 - Legal
-          _buildSectionTitle('Legal', color: AppColors.textPrimary),
-          _buildListTileContainer(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-              leading: _buildLeadingIcon(
-                Icons.privacy_tip_outlined,
-                AppColors.scaffoldBg,
-                AppColors.textPrimary,
-              ),
-              title: const CustomText(
-                'Privacy Policy',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-              trailing: const Icon(
-                Icons.open_in_new,
-                color: AppColors.textSecondary,
-              ),
-              onTap: () {
-                _showCustomCupertinoDialog(
-                  context: context,
-                  title: 'External Link',
-                  content:
-                      'You are leaving the app to view our Privacy Policy in a secure browser. Continue?',
-                  cancelText: 'Cancel',
-                  actionText: 'Open Browser',
-                  actionColor: AppColors.primary,
-                  onAction: (dialogContext) async {
-                    Navigator.of(dialogContext).pop();
-                    try {
-                      final uri = Uri.parse(
-                        'https://doc-hosting.flycricket.io/dosetrack-privacy-policy/eb3a8936-0772-4934-9e7d-86065794aa7f/privacy',
-                      );
-                      await launchUrl(uri);
-                    } catch (e) {
-                      debugPrint('Error launching URL: $e');
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Section 3 - Danger Zone
-          _buildSectionTitle('Danger Zone', color: Colors.red),
-          _buildListTileContainer(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 4,
-              ),
-              leading: _buildLeadingIcon(
-                Icons.delete_forever,
-                Colors.red.withValues(alpha: 0.1),
-                Colors.red,
-              ),
-              title: const CustomText(
-                'Wipe My Data',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.red,
-              ),
-              onTap: () {
-                final hasMeds = HiveService.getAllMedications().isNotEmpty;
-                final hasLogs = HiveService.getAllDoseLogs().isNotEmpty;
-
-                if (!hasMeds && !hasLogs) {
-                  showCupertinoDialog(
-                    context: context,
-                    builder: (context) => CupertinoAlertDialog(
-                      title: const CustomText(
-                        textAlign: TextAlign.center,
-                        'Nothing to Wipe',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                      content: const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: CustomText(
-                          textAlign: TextAlign.center,
-                          'Your database is currently empty. There is no medication data or dose history to wipe.',
-                          fontSize: 13,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      actions: [
-                        CupertinoDialogAction(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const CustomText(
-                            'OK',
-                            fontSize: 14,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  return;
-                }
-
-                _showCustomCupertinoDialog(
-                  context: context,
-                  title: 'Are you sure?',
-                  content:
-                      'This will permanently delete all your medication data from this device and the cloud.',
-                  cancelText: 'Cancel',
-                  actionText: 'Wipe Data',
-                  loadingActionText: 'Wiping...',
-                  actionColor: Colors.red,
-                  onAction: (dialogContext) async {
-                    try {
+                      // Cloud Sync
                       final supabase = Supabase.instance.client;
-                      // Step A (Cloud Wipe)
                       final userId = supabase.auth.currentUser?.id;
                       if (userId != null) {
                         await supabase
-                            .from('medications')
-                            .delete()
+                            .from('user_tokens')
+                            .update({'notifications_enabled': val})
                             .eq('user_id', userId);
                       }
-
-                      // Step B (Local Wipe)
-                      await HiveService.clearAll();
-
-                      // Step C (Identity Wipe)
-                      await supabase.auth.signOut();
-
-                      // Step D (Navigation Reset)
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const AppShell()),
-                          (route) => false,
-                        );
-                      }
                     } catch (e) {
-                      debugPrint('Wipe Error: $e');
-                      if (context.mounted) {
+                      debugPrint('Cloud sync error: $e');
+                      // Revert local state and Hive
+                      if (mounted) {
+                        setState(() {
+                          _notificationsEnabled = previousValue;
+                        });
+                        final box = await Hive.openBox('settings');
+                        await box.put('notifications_enabled', previousValue);
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: CustomText(
-                              'Failed to wipe data. Please check your connection and try again.',
+                              'Failed to sync settings with the cloud.',
                               color: Colors.white,
                             ),
                             backgroundColor: Colors.red,
@@ -321,74 +147,194 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                     }
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 30),
+          // Section 2: Support & Legal
+          _buildSectionHeader('SUPPORT & LEGAL', isFirst: false),
+          _SettingsCard(
+            children: [
+              _SettingsTile(
+                icon: Icons.mail_rounded,
+                iconBgColor: Colors.blue.withValues(alpha: 0.1),
+                iconColor: Colors.blue,
+                title: 'Send Feedback',
+                trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                onTap: () async {
+                  final uri = Uri.parse('mailto:omotososakiru25@gmail.com?subject=DoseTrack Feedback');
+                  try {
+                    await launchUrl(uri);
+                  } catch (e) {
+                    debugPrint('Error launching URL: $e');
+                  }
+                },
+              ),
+              _SettingsTile(
+                icon: Icons.privacy_tip_rounded,
+                iconBgColor: Colors.green.withValues(alpha: 0.1),
+                iconColor: Colors.green,
+                title: 'Privacy Policy',
+                trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                onTap: () {
+                  _showCustomCupertinoDialog(
+                    context: context,
+                    title: 'External Link',
+                    content:
+                        'You are leaving the app to view our Privacy Policy in a secure browser. Continue?',
+                    cancelText: 'Cancel',
+                    actionText: 'Open Browser',
+                    actionColor: AppColors.primary,
+                    onAction: (dialogContext) async {
+                      Navigator.of(dialogContext).pop();
+                      try {
+                        final uri = Uri.parse(
+                          'https://doc-hosting.flycricket.io/dosetrack-privacy-policy/eb3a8936-0772-4934-9e7d-86065794aa7f/privacy',
+                        );
+                        await launchUrl(uri);
+                      } catch (e) {
+                        debugPrint('Error launching URL: $e');
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+
+          // Section 3: Danger Zone
+          _buildSectionHeader('DANGER ZONE', isFirst: false),
+          _SettingsCard(
+            children: [
+              _SettingsTile(
+                icon: Icons.delete_forever_rounded,
+                iconBgColor: Colors.red.withValues(alpha: 0.1),
+                iconColor: Colors.red,
+                title: 'Wipe My Data',
+                titleColor: Colors.red,
+                trailing: const Icon(Icons.chevron_right, color: Colors.red),
+                onTap: () {
+                  final hasMeds = HiveService.getAllMedications().isNotEmpty;
+                  final hasLogs = HiveService.getAllDoseLogs().isNotEmpty;
+
+                  if (!hasMeds && !hasLogs) {
+                    showCupertinoDialog(
+                      context: context,
+                      builder: (context) => CupertinoAlertDialog(
+                        title: const CustomText(
+                          textAlign: TextAlign.center,
+                          'Nothing to Wipe',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                        content: const Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: CustomText(
+                            textAlign: TextAlign.center,
+                            'Your database is currently empty. There is no medication data or dose history to wipe.',
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        actions: [
+                          CupertinoDialogAction(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const CustomText(
+                              'OK',
+                              fontSize: 14,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+
+                  _showCustomCupertinoDialog(
+                    context: context,
+                    title: 'Are you sure?',
+                    content:
+                        'This will permanently delete all your medication data from this device and the cloud.',
+                    cancelText: 'Cancel',
+                    actionText: 'Wipe Data',
+                    loadingActionText: 'Wiping...',
+                    actionColor: Colors.red,
+                    onAction: (dialogContext) async {
+                      try {
+                        final supabase = Supabase.instance.client;
+                        // Step A (Cloud Wipe)
+                        final userId = supabase.auth.currentUser?.id;
+                        if (userId != null) {
+                          await supabase
+                              .from('medications')
+                              .delete()
+                              .eq('user_id', userId);
+                        }
+
+                        // Step B (Local Wipe)
+                        await HiveService.clearAll();
+
+                        // Step C (Identity Wipe)
+                        await supabase.auth.signOut();
+
+                        // Step D (Navigation Reset)
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const AppShell()),
+                            (route) => false,
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint('Wipe Error: $e');
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: CustomText(
+                                'Failed to wipe data. Please check your connection and try again.',
+                                color: Colors.white,
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
 
           // Footer
-          const Center(
-            child: CustomText(
-              'DoseTrack v1.0.0',
-              fontSize: 14,
-              color: Colors.grey,
+          const Padding(
+            padding: EdgeInsets.only(top: 32.0),
+            child: Center(
+              child: CustomText(
+                'Version 1.0.0',
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           const SizedBox(height: 48),
-          // TextButton(
-          //   onPressed: () {
-          //     // Forces a fatal crash
-          //     FirebaseCrashlytics.instance.crash();
-          //   },
-          //   child: const Text("Test Fatal Crash"),
-          // ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, {required Color color}) {
+  Widget _buildSectionHeader(String title, {required bool isFirst}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 12),
+      padding: EdgeInsets.only(bottom: 16, top: isFirst ? 0 : 24),
       child: CustomText(
         title,
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-        color: color,
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: AppColors.textSecondary,
       ),
-    );
-  }
-
-  Widget _buildListTileContainer({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        border: const Border(
-          top: BorderSide(color: AppColors.divider),
-          bottom: BorderSide(color: AppColors.divider),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(color: Colors.white, child: child),
-    );
-  }
-
-  Widget _buildLeadingIcon(IconData icon, Color bgColor, Color iconColor) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(icon, color: iconColor),
     );
   }
 
@@ -489,5 +435,120 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       },
     );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _SettingsCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final list = <Widget>[];
+    for (int i = 0; i < children.length; i++) {
+      list.add(children[i]);
+      if (i < children.length - 1) {
+        list.add(const Divider(height: 1, color: AppColors.divider, indent: 64));
+      }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: list,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconBgColor;
+  final Color iconColor;
+  final String title;
+  final String? subtitle;
+  final Color? titleColor;
+  final Widget trailing;
+  final VoidCallback? onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.iconBgColor,
+    required this.iconColor,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+    required this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomText(
+                  title,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: titleColor ?? AppColors.textPrimary,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  CustomText(
+                    subtitle!,
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          trailing,
+        ],
+      ),
+    );
+
+    if (onTap != null) {
+      tile = InkWell(
+        onTap: onTap,
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }
