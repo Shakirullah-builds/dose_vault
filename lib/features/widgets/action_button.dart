@@ -2,6 +2,10 @@ import 'package:dose_tracker/core/constants/app_colors.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
 import 'package:flutter/material.dart';
 
+/// Pill-shaped action button for Taken / Skipped.
+///
+/// The borderRadius is 20 (pill shape as per the Bento Box spec).
+/// 'Skipped' gets a neutral grey fill, 'Taken' gets a soft green fill.
 class ActionButton extends StatelessWidget {
   final String label;
   final bool isSkip;
@@ -14,12 +18,12 @@ class ActionButton extends StatelessWidget {
       color: isSkip
           ? AppColors.skipped
           : AppColors.taken.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

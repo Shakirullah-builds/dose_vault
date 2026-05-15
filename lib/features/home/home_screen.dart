@@ -192,7 +192,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             slivers: [
                               if (upcoming.isNotEmpty) ...[
                                 SliverToBoxAdapter(
-                                  child: _sectionTitle('UPCOMING'),
+                                  child: _sectionTitle('Upcoming Schedule'),
                                 ),
                                 SliverList(
                                   delegate: SliverChildBuilderDelegate(
@@ -236,7 +236,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ],
                               if (completed.isNotEmpty) ...[
                                 SliverToBoxAdapter(
-                                  child: _sectionTitle('COMPLETED'),
+                                  child: _sectionTitle('Completed'),
                                 ),
                                 SliverList(
                                   delegate: SliverChildBuilderDelegate((_, i) {
@@ -300,13 +300,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
 Widget _sectionTitle(String title) {
   return Padding(
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
     child: CustomText(
       title,
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textSecondary,
-      letterSpacing: 1.5,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: AppColors.textPrimary,
     ),
   );
 }
+

@@ -1,9 +1,19 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
+import 'package:dose_tracker/features/widgets/header.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Premium Bento Box history tile.
+///
+/// Layout:
+/// ┌──────────────────────────────────────────────┐
+/// │  [✓]   MedName               Scheduled 3 PM  │
+/// │         250mg                  Taken at 3:02  │
+/// └──────────────────────────────────────────────┘
+///
+/// Uses premiumCardDecoration for consistent radius/shadow with home cards.
 class HistoryTile extends StatelessWidget {
   final DoseLog log;
   final Medication? medication;
@@ -19,7 +29,13 @@ class HistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTaken = log.status == 'taken';
     final name = medication?.name ?? 'Unknown';
-    final timeStr = log.actionTime != null
+    final dosageStr = medication != null
+        ? '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}'
+        : '';
+    final scheduledStr = medication != null
+        ? _formatTime(medication!.scheduledTime)
+        : '';
+    final actionStr = log.actionTime != null
         ? DateFormat('h:mm a').format(log.actionTime!)
         : '';
 
@@ -27,81 +43,78 @@ class HistoryTile extends StatelessWidget {
       key: ValueKey('history_${log.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(color: AppColors.missed),
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: AppColors.missed,
+          borderRadius: BorderRadius.circular(24),
+        ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 24),
         child: const Icon(Icons.undo, color: Colors.white),
       ),
       onDismissed: (_) => onDelete(),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.cardBg,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          //borderRadius: BorderRadius.circular(14),
-          //border: Border.all(color: AppColors.divider),
-        ),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: premiumCardDecoration,
         child: Row(
           children: [
+            // Left — circular status icon
             Container(
-              width: 40,
-              height: 40,
-              //padding: ,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isTaken
                     ? AppColors.taken.withValues(alpha: 0.12)
                     : AppColors.missed.withValues(alpha: 0.1),
-                // borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 isTaken
-                    ? Icons.check_circle_outline
+                    ? Icons.check_circle_rounded
                     : Icons.remove_circle_outline,
                 color: isTaken ? AppColors.taken : AppColors.skippedText,
                 size: 22,
               ),
             ),
-            const SizedBox(width: 12),
+
+            const SizedBox(width: 14),
+
+            // Center — name + dosage
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CustomText(
                     name,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
-                  if (medication != null)
+                  if (dosageStr.isNotEmpty)
                     CustomText(
-                      '${medication!.dosage.truncateToDouble() == medication!.dosage ? medication!.dosage.toInt() : medication!.dosage}${medication!.unit}',
+                      dosageStr,
                       fontSize: 13,
                       color: AppColors.textSecondary,
                     ),
                 ],
               ),
             ),
+
+            // Right — scheduled time + action time
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                CustomText(
-                  isTaken ? 'Taken' : 'Skipped',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isTaken ? AppColors.taken : AppColors.skippedText,
-                ),
-                if (timeStr.isNotEmpty)
+                if (scheduledStr.isNotEmpty)
                   CustomText(
-                    timeStr,
+                    scheduledStr,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                if (actionStr.isNotEmpty)
+                  CustomText(
+                    '${isTaken ? "Taken at" : "Skipped at"}: $actionStr',
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -111,5 +124,15 @@ class HistoryTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(String t) {
+    try {
+      final p = t.split(':');
+      final d = DateTime(2000, 1, 1, int.parse(p[0]), int.parse(p[1]));
+      return DateFormat('h:mm a').format(d);
+    } catch (_) {
+      return t;
+    }
   }
 }

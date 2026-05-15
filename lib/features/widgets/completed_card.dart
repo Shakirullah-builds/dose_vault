@@ -2,9 +2,14 @@ import 'package:dose_tracker/core/constants/app_colors.dart';
 import 'package:dose_tracker/core/models/medication.dart';
 import 'package:dose_tracker/core/utils/medication_utils.dart';
 import 'package:dose_tracker/core/widgets/custom_text.dart';
+import 'package:dose_tracker/features/widgets/header.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Premium Bento Box completed card.
+///
+/// Same data contract as before but upgraded visuals:
+/// rounded-24, premium shadow, and the green/grey icon on the left.
 class CompletedCard extends StatelessWidget {
   final Medication medication;
   final DoseLog doseLog;
@@ -21,32 +26,28 @@ class CompletedCard extends StatelessWidget {
     final actionStr = doseLog.actionTime != null
         ? DateFormat('h:mm a').format(doseLog.actionTime!)
         : '';
+
     return Dismissible(
       key: ValueKey('completed_${medication.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(color: AppColors.missed),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.missed,
+          borderRadius: BorderRadius.circular(24),
+        ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 24),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
       onDismissed: (_) => onDelete(),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.cardBg,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        decoration: premiumCardDecoration,
         child: Row(
           children: [
+            // Status icon
             Container(
               width: 48,
               height: 48,
@@ -55,7 +56,6 @@ class CompletedCard extends StatelessWidget {
                 color: isTaken
                     ? AppColors.taken.withValues(alpha: 0.12)
                     : AppColors.skipped.withValues(alpha: 0.5),
-                //borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isTaken
@@ -65,7 +65,10 @@ class CompletedCard extends StatelessWidget {
                 size: 24,
               ),
             ),
+
             const SizedBox(width: 14),
+
+            // Name + dosage
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,6 +88,8 @@ class CompletedCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Time + action label
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
