@@ -1,4 +1,5 @@
 import 'package:dose_tracker/core/widgets/custom_empty_state.dart';
+import 'package:dose_tracker/core/services/pdf_export_service.dart';
 import 'package:dose_tracker/features/widgets/date_group.dart';
 import 'package:dose_tracker/core/widgets/top_toast.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,11 @@ class HistoryScreen extends ConsumerWidget {
     }
 
     final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+    final hasHistory = sortedDates.isNotEmpty;
+
+    // Pre-compute stats for the PDF
+    final totalTaken = allLogs.where((l) => l.status == 'taken').length;
+    final totalSkipped = allLogs.where((l) => l.status == 'skipped').length;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,6 +52,36 @@ class HistoryScreen extends ConsumerWidget {
           color: AppColors.textPrimary,
         ),
         elevation: 0,
+        // ── Export PDF button (only visible when there IS history) ────
+        actions: hasHistory
+            ? [
+                IconButton(
+                  icon: const Icon(
+                    Icons.share,
+                    color: AppColors.primary,
+                  ),
+                  tooltip: 'Export Report',
+                  onPressed: () async {
+                    try {
+                      await PdfExportService.generateAndShareReport(
+                        logs: allLogs,
+                        medMap: medMap,
+                        totalTaken: totalTaken,
+                        totalSkipped: totalSkipped,
+                      );
+                    } catch (e) {
+                      debugPrint('Failed to generate report: $e');
+                      if (context.mounted) {
+                        TopToast.showError(
+                          context,
+                          'Failed to generate report: $e',
+                        );
+                      }
+                    }
+                  },
+                ),
+              ]
+            : null,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: AppColors.divider),
