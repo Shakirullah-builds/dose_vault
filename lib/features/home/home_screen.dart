@@ -1,4 +1,5 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
+import 'package:dose_tracker/core/widgets/custom_elevated_button.dart';
 import 'package:dose_tracker/core/widgets/custom_empty_state.dart';
 import 'package:dose_tracker/features/widgets/completed_card.dart';
 import 'package:dose_tracker/features/widgets/header.dart';
@@ -162,22 +163,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             subtitle:
                                 'Add your first medication to start tracking. Never miss a dose!',
                             icon: Icons.medication_outlined,
-                            actionButton: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+                            actionButton: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 40),
+                              child: CustomElevatedButton(
+                                label: '+ Add Medication',
+                                borderRadius: 30,
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const dose_tracker_add_medication.AddMedicationScreen(),
+                                    ),
+                                  );
+                                },
                               ),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const dose_tracker_add_medication.AddMedicationScreen(),
-                                  ),
-                                );
-                              },
-                              child: const CustomText('+ Add Medication', color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ))
                   : Column(

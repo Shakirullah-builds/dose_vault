@@ -1,4 +1,5 @@
 import 'package:dose_tracker/core/constants/app_colors.dart';
+import 'package:dose_tracker/core/widgets/custom_elevated_button.dart';
 import 'package:dose_tracker/features/widgets/snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -135,7 +136,10 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
 
       await ref.read(medicationListProvider.notifier).addMedication(med);
 
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackBar.show(context, 'Medication added successfully');
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) {
         AppSnackBar.showError(context, 'Error saving: $e');
@@ -269,36 +273,12 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
               ),
             ),
       
-            // ── Save Button ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const CustomText('Save Medication'),
-                ),
+              child: CustomElevatedButton(
+                label: 'Save Medication',
+                onPressed: _saving ? null : _save,
+                isLoading: _saving,
               ),
             ),
           ],
