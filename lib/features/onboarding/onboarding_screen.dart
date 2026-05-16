@@ -59,9 +59,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     await box.put('has_seen_onboarding', true);
 
     if (!mounted) return;
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(
+          milliseconds: 1000,
+        ), // A majestic 1-second reveal
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const AppShell(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // The Fade: Smoothly brings the opacity from 0 to 1
+          final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+          );
+
+          // The Scale: Starts slightly pushed back (0.93) and resolves to full size (1.0)
+          final scaleAnimation = Tween<double>(begin: 0.93, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          );
+
+          return FadeTransition(
+            opacity: fadeAnimation,
+            child: ScaleTransition(scale: scaleAnimation, child: child),
+          );
+        },
+      ),
+    );
   }
 
   // ── Lifecycle ───────────────────────────────────────────────────────
@@ -121,7 +143,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   // Orb 2 — soft green/teal, drifting bottom-right
                   Transform.translate(
                     offset: Offset(
-                      MediaQuery.of(context).size.width - 200 +
+                      MediaQuery.of(context).size.width -
+                          200 +
                           math.cos(t * 0.8) * 25,
                       MediaQuery.of(context).size.height * 0.45 +
                           math.sin(t * 0.8) * 35,
@@ -144,9 +167,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-              child: Container(
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
+              child: Container(color: Colors.white.withValues(alpha: 0.5)),
             ),
           ),
 

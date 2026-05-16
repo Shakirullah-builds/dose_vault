@@ -78,7 +78,7 @@ class NotificationService {
         badge: true,
         sound: true,
       );
-      
+
       return granted ?? false;
     }
 
