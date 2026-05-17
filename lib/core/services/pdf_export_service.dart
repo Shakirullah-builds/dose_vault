@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-
 import 'package:dose_vault/core/models/medication.dart';
 
 /// Generates a professional PDF adherence report and opens the native share sheet.
