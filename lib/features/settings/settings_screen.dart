@@ -162,7 +162,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                 onTap: () async {
                   final uri = Uri.parse(
-                    'mailto:omotososakiru25@gmail.com?subject=DoseVault Feedback',
+                    'mailto:shakirullahstudios@gmail.com?subject=DoseVault Feedback',
                   );
                   try {
                     await launchUrl(uri);
@@ -180,7 +180,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () {
                   _showCustomCupertinoDialog(
                     context: context,
-                    title: 'External Link',
+                    title: 'Open Link',
                     content:
                         'You are leaving the app to view our Privacy Policy in a secure browser. Continue?',
                     cancelText: 'Cancel',
@@ -190,7 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Navigator.of(dialogContext).pop();
                       try {
                         final uri = Uri.parse(
-                          'https://doc-hosting.flycricket.io/dosevault-privacy-policy/c8c8b110-b272-45fa-b7a0-46878c10ed1b/privacy',
+                          'https://docs.google.com/document/d/e/2PACX-1vS4aYvV4WILUamUkcJRdMoqRjoNugAAHcexCH8HCDH5YYwkjNBF1vYBrUc4UX_oPNaWtC9JhLmXSI0J/pub',
                         );
                         await launchUrl(uri);
                       } catch (e) {
