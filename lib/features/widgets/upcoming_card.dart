@@ -302,7 +302,6 @@ class UpcomingCard extends ConsumerWidget {
             color: Colors.red,
             fontWeight: FontWeight.normal,
           ),
-          //child: const Text('Cancel'),
         ),
       ),
     );

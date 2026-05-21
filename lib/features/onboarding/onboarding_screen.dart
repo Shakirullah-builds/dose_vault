@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:dose_vault/core/models/onboarding_model.dart';
 import 'package:dose_vault/core/widgets/custom_elevated_button.dart';
+import 'package:dose_vault/core/widgets/pill_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -180,14 +181,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   alignment: Alignment.topRight,
                   child: pageIndex == 2
                       ? const SizedBox(height: 48)
-                      : TextButton(
-                          onPressed: _completeOnboarding,
-                          child: const CustomText(
-                            'Skip',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
+                      : PillChip(
+                          label: 'Skip',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          textColor: AppColors.primary,
+                          onTap: _completeOnboarding,
                         ),
                 ),
 
