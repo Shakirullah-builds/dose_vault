@@ -8,7 +8,9 @@ import 'package:dose_vault/features/widgets/action_button.dart';
 import 'package:dose_vault/features/widgets/header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dose_vault/features/medication/add_medication_screen.dart';
 
 /// Premium Bento Box upcoming medication card.
 ///
@@ -103,8 +105,22 @@ class UpcomingCard extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            style: ButtonStyle(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: AppColors.textSecondary,
+                              size: 20,
+                            ),
+                            onPressed: () => _showMoreOptions(context, ref),
+                          ),
                         ],
                       ),
+                      const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -200,6 +216,93 @@ class UpcomingCard extends ConsumerWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showMoreOptions(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    DateTime scheduledTime = medication.scheduledDateTime;
+
+    if (now.hour < 3 && scheduledTime.hour > 12) {
+      scheduledTime = scheduledTime.subtract(const Duration(days: 1));
+    }
+    if (scheduledTime.isBefore(medication.createdAt)) {
+      scheduledTime = scheduledTime.add(const Duration(days: 1));
+    }
+
+    final isPending = scheduledTime.isAfter(now);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        // title: CustomText(
+        //   medication.name,
+        //   fontWeight: FontWeight.bold,
+        //   fontSize: 16,
+        // ),
+        // message: CustomText(dosageLabel(medication), fontSize: 13),
+        actions: [
+          if (isPending)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                HapticFeedback.mediumImpact();
+                ref
+                    .read(doseLogListProvider.notifier)
+                    .logDose(medicationId: medication.id, status: 'taken');
+              },
+              child: CustomText(
+                'Take Early',
+                fontSize: 20,
+                color: AppColors.primary,
+                //fontWeight: FontWeight.bold,
+              ),
+              //child: const Text('Take Early'),
+            ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AddMedicationScreen(medication: medication),
+                ),
+              );
+            },
+            child: CustomText(
+              'Edit Medication',
+              fontSize: 20,
+              color: AppColors.primary,
+              //fontWeight: FontWeight.bold,
+            ),
+            //child: const Text('Edit Medication'),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete();
+            },
+            child: CustomText(
+              'Delete Medication',
+              fontSize: 20,
+              color: Colors.red,
+              //fontWeight: FontWeight.bold,
+            ),
+            //child: const Text('Delete Medication'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: CustomText(
+            'Cancel',
+            fontSize: 20,
+            color: Colors.red,
+            fontWeight: FontWeight.normal,
+          ),
+          //child: const Text('Cancel'),
         ),
       ),
     );

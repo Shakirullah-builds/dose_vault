@@ -17,6 +17,13 @@ class MedicationListNotifier extends Notifier<List<Medication>> {
     ref.read(supabaseSyncServiceProvider).syncMedicationsUp();
   }
 
+  Future<void> updateMedication(Medication med) async {
+    await HiveService.addMedication(med);
+    state = state.map((m) => m.id == med.id ? med : m).toList();
+    // Fire-and-forget background sync
+    ref.read(supabaseSyncServiceProvider).syncMedicationsUp();
+  }
+
   Future<void> removeMedication(String id) async {
     await HiveService.deleteMedication(id);
     state = state.where((m) => m.id != id).toList();

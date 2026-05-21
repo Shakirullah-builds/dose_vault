@@ -9,9 +9,11 @@ import 'package:dose_vault/core/providers/medication_provider.dart';
 import 'package:dose_vault/core/services/hive_service.dart';
 import 'package:dose_vault/core/widgets/custom_text.dart';
 import 'package:dose_vault/core/widgets/custom_text_field.dart';
+import 'package:dose_vault/core/services/notification_service.dart';
 
 class AddMedicationScreen extends ConsumerStatefulWidget {
-  const AddMedicationScreen({super.key});
+  final Medication? medication;
+  const AddMedicationScreen({this.medication, super.key});
 
   @override
   ConsumerState<AddMedicationScreen> createState() =>
@@ -26,6 +28,29 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   String _selectedUnit = 'mg';
   TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.medication != null) {
+      final med = widget.medication!;
+      _nameController.text = med.name;
+      // Format double to string without trailing decimal if it's a whole number
+      _dosageController.text = med.dosage % 1 == 0
+          ? med.dosage.toInt().toString()
+          : med.dosage.toString();
+      _instructionsController.text = med.instructions ?? '';
+      _selectedUnit = med.unit;
+      
+      final parts = med.scheduledTime.split(':');
+      if (parts.length == 2) {
+        _selectedTime = TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -111,8 +136,10 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
       final timeStr =
           '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
 
+      final isEditing = widget.medication != null;
+
       final med = Medication(
-        id: HiveService.generateId(),
+        id: isEditing ? widget.medication!.id : HiveService.generateId(),
         name: name,
         dosage: dosage,
         unit: _selectedUnit,
@@ -120,13 +147,25 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
         instructions: _instructionsController.text.trim().isEmpty
             ? null
             : _instructionsController.text.trim(),
-        createdAt: DateTime.now(),
+        createdAt: isEditing ? widget.medication!.createdAt : DateTime.now(),
       );
 
-      await ref.read(medicationListProvider.notifier).addMedication(med);
+      if (isEditing) {
+        await ref.read(medicationListProvider.notifier).updateMedication(med);
+        await ref.read(notificationServiceProvider).cancelReminder(med.id);
+        await ref.read(notificationServiceProvider).scheduleDoseReminder(med);
+      } else {
+        await ref.read(medicationListProvider.notifier).addMedication(med);
+        await ref.read(notificationServiceProvider).scheduleDoseReminder(med);
+      }
 
       if (mounted) {
-        TopToast.show(context, 'Medication added successfully');
+        TopToast.show(
+          context,
+          isEditing
+              ? 'Medication updated successfully'
+              : 'Medication added successfully',
+        );
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -158,8 +197,8 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const CustomText(
-            'New Medication',
+          title: CustomText(
+            widget.medication != null ? 'Edit Medication' : 'New Medication',
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,

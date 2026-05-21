@@ -283,6 +283,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         // Step D (Navigation Reset)
                         if (context.mounted) {
+                          TopToast.show(context, 'Data wiped successfully');
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(builder: (_) => const AppShell()),
                             (route) => false,
