@@ -153,13 +153,15 @@ class _TopToastWidgetState extends State<_TopToastWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Dark slate for info — neutral, doesn't compete with brand blue.
+    // Soft red for errors — universally understood, not aggressive.
     final bgColor = widget.isError
-        ? AppColors.warning  // Deep orange
-        : AppColors.primary.withValues(alpha: 0.95); // Premium dark grey
+        ? AppColors.missed
+        : const Color(0xFF1E293B); // Premium dark slate
 
     final glowColor = widget.isError
-        ? AppColors.warning.withValues(alpha: 0.3)
-        : AppColors.primary.withValues(alpha: 0.2);
+        ? AppColors.missed.withValues(alpha: 0.3)
+        : const Color(0xFF1E293B).withValues(alpha: 0.2);
 
     return Positioned(
       top: 0,

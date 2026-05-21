@@ -52,7 +52,13 @@ class SupabaseSyncService {
 
     ref.read(isInitialSyncingProvider.notifier).state = true;
     try {
-      // 1. Fetch Medications
+      // 1. PUSH OFFLINE DATA UP FIRST
+      // If the user added or took medications while offline, we push 
+      // the local truth to the cloud before pulling down.
+      await syncMedicationsUp();
+      await syncLogsUp();
+
+      // 2. Fetch Medications (PULL DOWN)
       final medsData = await _supabase.from('medications').select();
       final List<Medication> medsToSave = [];
       for (final json in medsData) {

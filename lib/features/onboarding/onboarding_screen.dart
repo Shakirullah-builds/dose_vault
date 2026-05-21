@@ -181,12 +181,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   alignment: Alignment.topRight,
                   child: pageIndex == 2
                       ? const SizedBox(height: 48)
-                      : PillChip(
-                          label: 'Skip',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          textColor: AppColors.primary,
-                          onTap: _completeOnboarding,
+                      : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: PillChip(
+                            label: 'Skip',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            textColor: AppColors.primary,
+                            onTap: _completeOnboarding,
+                          ),
                         ),
                 ),
 

@@ -7,8 +7,8 @@ class AppColors {
   AppColors._();
 
   // Primary
-  static const Color primary = Color(0xFF3B82F6); // Calm sky blue
-  static const Color primaryDark = Color(0xFF2563EB);
+  static const Color primary = Color(0xFF4A90D9); // Calm sky blue
+  static const Color primaryDark = Color(0xFF3A7BD5);
   static const Color accent = Color(0xFF26C6A0); // Teal green for "Taken"
   static const Color accentLight = Color(0xFFDDFBF4);
 

@@ -5,6 +5,7 @@ import 'package:dose_vault/core/theme/app_theme.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,75 +19,85 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dose_vault/features/onboarding/onboarding_screen.dart';
 
 void main() async {
-  // Ensure the native bridge is locked in before we run async code
-  WidgetsFlutterBinding.ensureInitialized();
+    // Ensure the native bridge is locked in before we run async code
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Catch all uncaught "fatal" errors from the Flutter framework
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-  // Catch all uncaught asynchronous errors that aren't handled by the Flutter framework
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
-
-  // 1. Initialize Local Database
-  await HiveService.init();
-
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
-
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
-
-  // 1.5 Silent Anonymous Login
-  if (Supabase.instance.client.auth.currentSession == null) {
-    await Supabase.instance.client.auth.signInAnonymously();
-  }
-
-  // 2. Initialize Timezones (CRITICAL for exact background alarms)
-  tz.initializeTimeZones();
-
-  // 3. Set tz.local to the device's actual timezone
-  //    Without this, tz.local defaults to UTC and all alarms fire at wrong times.
-  _setLocalTimezone();
-
-  // 4. Initialize the Notification Engine
-  final plugin = FlutterLocalNotificationsPlugin();
-  final notificationService = NotificationService(plugin);
-  await notificationService.init();
-
-  // Wipe legacy alarms to prevent conflicts with new push system
-  await notificationService.cancelAllLocalAlarms();
-
-  final settingsBox = Hive.box('settings');
-  final hasSeenOnboarding = settingsBox.get('has_seen_onboarding', defaultValue: false);
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        notificationServiceProvider.overrideWithValue(notificationService),
-      ],
-      child: MaterialApp(
-        
-        title: 'Dose Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: hasSeenOnboarding ? const AppShell() : const OnboardingScreen(),
+    // Make the status bar transparent to blend with the app background
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
-    ),
-  );
+    );
 
-  // Fire-and-forget the token sync so the UI doesn't freeze on boot!
-  Future.microtask(() async {
-    // Capture FCM token and sync it to Supabase
-    await SupabaseSyncService(Supabase.instance.client).syncDeviceToken();
-  });
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    // Catch all uncaught "fatal" errors from the Flutter framework
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    // Catch all uncaught asynchronous errors that aren't handled by the Flutter framework
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+
+    // 1. Initialize Local Database
+    await HiveService.init();
+
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
+
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    );
+
+    // 2. Initialize Timezones (CRITICAL for exact background alarms)
+    tz.initializeTimeZones();
+
+    // 3. Set tz.local to the device's actual timezone
+    _setLocalTimezone();
+
+    // 4. Initialize the Notification Engine
+    final plugin = FlutterLocalNotificationsPlugin();
+    final notificationService = NotificationService(plugin);
+    await notificationService.init();
+
+    // Wipe legacy alarms to prevent conflicts with new push system
+    await notificationService.cancelAllLocalAlarms();
+
+    final settingsBox = Hive.box('settings');
+    final hasSeenOnboarding = settingsBox.get('has_seen_onboarding', defaultValue: false);
+
+    runApp(
+      ProviderScope(
+        overrides: [
+          notificationServiceProvider.overrideWithValue(notificationService),
+        ],
+        child: MaterialApp(
+          title: 'DoseVault',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: hasSeenOnboarding ? const AppShell() : const OnboardingScreen(),
+        ),
+      ),
+    );
+
+    // Fire-and-forget background network tasks so the UI doesn't freeze on boot!
+    Future.microtask(() async {
+      try {
+        // 1.5 Silent Anonymous Login (Moved here so it doesn't block runApp if network hangs)
+        if (Supabase.instance.client.auth.currentSession == null) {
+          await Supabase.instance.client.auth.signInAnonymously().timeout(const Duration(seconds: 10));
+        }
+
+        // Capture FCM token and sync it to Supabase
+        await SupabaseSyncService(Supabase.instance.client).syncDeviceToken();
+      } catch (e) {
+        debugPrint('Background Boot Task Error: $e');
+      }
+    });
 }
 
 /// Detects the device's UTC offset and sets tz.local to a matching timezone.

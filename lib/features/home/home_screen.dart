@@ -138,48 +138,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           children: [
             if (!_hasNotificationPermission)
               Container(
-                color: Colors.orange.shade50,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  //vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          color: Colors.orange.shade800,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: CustomText(
-                            'DoseVault needs notifications enabled to remind you of your medication.',
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange.shade800,
-                          ),
-                        ),
-                      ],
+                margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orange.shade200, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    const SizedBox(height: 6),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.notifications_active_outlined,
+                        color: Colors.orange.shade700,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CustomText(
+                            'Enable Notifications',
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          const SizedBox(height: 2),
+                          const CustomText(
+                            'Get reminders for your doses.',
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     TextButton(
                       style: TextButton.styleFrom(
-                        minimumSize:
-                            Size.zero, // No minimum size for text buttons
-                        padding: EdgeInsets.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: Colors.orange.shade50,
+                        foregroundColor: Colors.orange.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
                       ),
                       onPressed: () async {
                         await openAppSettings();
                       },
-                      child: CustomText(
-                        'Go to settings',
-                        fontSize: 15,
+                      child: const CustomText(
+                        'Fix',
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
+                        color: Colors.orange, // Force color match
                       ),
                     ),
                   ],
