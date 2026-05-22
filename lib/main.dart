@@ -19,6 +19,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dose_vault/features/onboarding/onboarding_screen.dart';
 
 void main() async {
+  try {
     // Ensure the native bridge is locked in before we run async code
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -98,6 +99,23 @@ void main() async {
         debugPrint('Background Boot Task Error: $e');
       }
     });
+  } catch (e, stack) {
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'CRITICAL BOOT ERROR:\n\n$e\n\n$stack',
+                style: const TextStyle(color: Colors.red, fontSize: 14),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Detects the device's UTC offset and sets tz.local to a matching timezone.

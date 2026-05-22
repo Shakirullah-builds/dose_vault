@@ -41,7 +41,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
           : med.dosage.toString();
       _instructionsController.text = med.instructions ?? '';
       _selectedUnit = med.unit;
-      
+
       final parts = med.scheduledTime.split(':');
       if (parts.length == 2) {
         _selectedTime = TimeOfDay(
@@ -203,7 +203,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
-         
+
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
             child: Container(height: 1, color: AppColors.divider),
@@ -221,6 +221,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                     _label('MEDICATION NAME'),
                     const SizedBox(height: 8),
                     CustomTextField(
+                      autofocus: true,
                       controller: _nameController,
                       textCapitalization: TextCapitalization.words,
                       hintText: 'e.g., Amoxicillin',

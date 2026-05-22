@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   final EdgeInsetsGeometry? contentPadding;
   final InputBorder? enabledBorder;
   final InputBorder? focusedBorder;
+  final bool? autofocus;
 
   const CustomTextField({
     super.key,
@@ -36,11 +37,13 @@ class CustomTextField extends StatelessWidget {
     this.contentPadding,
     this.enabledBorder,
     this.focusedBorder,
+    this.autofocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      autofocus: autofocus ?? false,
       controller: controller,
       textCapitalization: textCapitalization,
       keyboardType: keyboardType,

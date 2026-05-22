@@ -12,6 +12,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dose_vault/features/medication/add_medication_screen.dart';
 
+/// A provider that emits the current time every 5 seconds.
+/// This allows the cards to dynamically update their state (Pending -> Actionable)
+/// exactly when the time arrives, without the user needing to refresh the screen.
+final timeTickProvider = StreamProvider.autoDispose<DateTime>((ref) {
+  return Stream.periodic(const Duration(seconds: 5), (_) => DateTime.now());
+});
+
 /// Premium Bento Box upcoming medication card.
 ///
 /// If the scheduled time has passed, the action buttons are replaced
@@ -27,28 +34,41 @@ class UpcomingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final now = DateTime.now();
+    // Watch the time ticker to force a rebuild every 5 seconds
+    final now = ref.watch(timeTickProvider).value ?? DateTime.now();
+    
+    // Strip milliseconds/microseconds to ensure exact minute comparisons
+    final cleanNow = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    
     DateTime scheduledTime = medication.scheduledDateTime;
 
     // ── 1. THE CINDERELLA FIX (Logical Day) ──
     // Pull late-night PM pills back to "Yesterday"
-    if (now.hour < 3 && scheduledTime.hour > 12) {
+    if (cleanNow.hour < 3 && scheduledTime.hour > 12) {
       scheduledTime = scheduledTime.subtract(const Duration(days: 1));
     }
 
     // ── 2. THE TIME TRAVEL FIX (Creation Boundary) ──
     // If the calculated time happened BEFORE the user even created this medication profile,
     // they cannot be overdue for it. We must push it forward to its first real occurrence.
-    if (scheduledTime.isBefore(medication.createdAt)) {
+    // We strip seconds to prevent false positives (e.g. creating at 10:30:05 for 10:30:00).
+    final cleanCreatedAt = DateTime(
+      medication.createdAt.year,
+      medication.createdAt.month,
+      medication.createdAt.day,
+      medication.createdAt.hour,
+      medication.createdAt.minute,
+    );
+    if (scheduledTime.isBefore(cleanCreatedAt)) {
       scheduledTime = scheduledTime.add(const Duration(days: 1));
     }
 
     // STATE 1: Pending (Time hasn't arrived yet)
-    final isPending = scheduledTime.isAfter(now);
+    final isPending = scheduledTime.isAfter(cleanNow);
 
     // STATE 3: Overdue (15 minutes late)
     final isOverdue = scheduledTime.isBefore(
-      now.subtract(const Duration(minutes: 15)),
+      cleanNow.subtract(const Duration(minutes: 15)),
     );
 
     return Dismissible(
@@ -223,26 +243,31 @@ class UpcomingCard extends ConsumerWidget {
 
   void _showMoreOptions(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
+    final cleanNow = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    
     DateTime scheduledTime = medication.scheduledDateTime;
 
-    if (now.hour < 3 && scheduledTime.hour > 12) {
+    if (cleanNow.hour < 3 && scheduledTime.hour > 12) {
       scheduledTime = scheduledTime.subtract(const Duration(days: 1));
     }
-    if (scheduledTime.isBefore(medication.createdAt)) {
+    
+    final cleanCreatedAt = DateTime(
+      medication.createdAt.year,
+      medication.createdAt.month,
+      medication.createdAt.day,
+      medication.createdAt.hour,
+      medication.createdAt.minute,
+    );
+    
+    if (scheduledTime.isBefore(cleanCreatedAt)) {
       scheduledTime = scheduledTime.add(const Duration(days: 1));
     }
 
-    final isPending = scheduledTime.isAfter(now);
+    final isPending = scheduledTime.isAfter(cleanNow);
 
     showCupertinoModalPopup(
       context: context,
       builder: (context) => CupertinoActionSheet(
-        // title: CustomText(
-        //   medication.name,
-        //   fontWeight: FontWeight.bold,
-        //   fontSize: 16,
-        // ),
-        // message: CustomText(dosageLabel(medication), fontSize: 13),
         actions: [
           if (isPending)
             CupertinoActionSheetAction(

@@ -19,7 +19,7 @@ class NotificationService {
   /// Call once from main() after WidgetsFlutterBinding.ensureInitialized().
   Future<void> init() async {
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/launcher_icon',
+      'ic_notification',
     );
 
     const iosSettings = DarwinInitializationSettings(
@@ -87,6 +87,10 @@ class NotificationService {
 
   // ── Scheduling ──────────────────────────────────────────────────────
 
+  /// Schedules a daily notification at the exact time stored in [med].
+  ///
+  /// Uses `zonedSchedule` with `matchDateTimeComponents: DateTimeComponents.time`
+  /// which tells the OS to repeat the notification every day at that time.
   /// Schedules a daily notification at the exact time stored in [med].
   ///
   /// Uses `zonedSchedule` with `matchDateTimeComponents: DateTimeComponents.time`
