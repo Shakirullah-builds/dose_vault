@@ -269,8 +269,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         // Step A (Cloud Wipe)
                         final userId = supabase.auth.currentUser?.id;
                         if (userId != null) {
+                          // 1. Delete all medications
                           await supabase
                               .from('medications')
+                              .delete()
+                              .eq('user_id', userId);
+
+                          // 2. Delete all history logs
+                          await supabase
+                              .from('dose_logs')
+                              .delete()
+                              .eq('user_id', userId);
+
+                          // 3. Delete their notification token
+                          await supabase
+                              .from('user_tokens')
                               .delete()
                               .eq('user_id', userId);
                         }
